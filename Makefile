@@ -1,9 +1,10 @@
 K=kernel
 
-OBJS = $K/entry.o \
+OBJS = $K/entry.o 	\
+		$K/printf.o	\
 		$K/main.o
 
-# 
+# 生成工具链前缀
 ifndef TOOLPREFIX
 TOOLPREFIX := $(shell if riscv64-unknown-elf-objdump -i 2>&1 | grep 'elf64-big' >/dev/null 2>&1; \
 	then echo 'riscv64-unknown-elf-'; \
@@ -28,24 +29,34 @@ CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
+# Disable PIE when possible (for Ubuntu 16.10 toolchain)
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+CFLAGS += -fno-pie -no-pie
+endif
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
+CFLAGS += -fno-pie -nopie
+endif
+
 LDFLAGS = -z max-page-size=4096
 
 QEMU = qemu-system-riscv64
-QEMUFLAGS = -machine virt -bios default -device loader,file=Image,addr=0x80200000 --nographic
+QEMUFLAGS = -machine virt -nographic -bios default -device loader,file=Image,addr=0x80200000
 
 all: Image
 
 Image: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o Image $(OBJS)
+	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Image $(OBJS)
+	$(OBJCOPY) $K/Image --strip-all -O binary $@
+
 
 $K/%.o: $K/%.c $K/%.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f */*.d */*.o Image Image.asm
+	rm -f */*.d */*.o $K/Image Image Image.asm
 
 asm: Image
-	$(OBJDUMP) -S Image > Image.asm
+	$(OBJDUMP) -S $K/Image > Image.asm
 
 qemu: Image
 	$(QEMU) $(QEMUFLAGS)

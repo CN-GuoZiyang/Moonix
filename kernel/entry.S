@@ -3,6 +3,7 @@
 
 _start:
     la sp, bootstacktop
+    
     call main
 loop:
     j loop
