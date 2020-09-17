@@ -1,7 +1,8 @@
 K=kernel
 
-OBJS = $K/entry.o 	\
-		$K/printf.o	\
+OBJS = $K/entry.o 		\
+		$K/printf.o		\
+		$K/interrupt.o	\
 		$K/main.o
 
 # 生成工具链前缀

@@ -6,7 +6,7 @@ extern void bootstacktop();
 void
 main()
 {
-    printf("_start vaddr = %p\n", _start);
-    printf("bootstacktop vaddr = %p\n", bootstacktop);
-    panic("Nothing to do!\n");
+    init_interrupt();
+    asm volatile("ebreak");
+    printf("never return from trap\n");
 }

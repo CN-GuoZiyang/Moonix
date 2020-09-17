@@ -5,4 +5,6 @@ void putchar(int c);
 void printf(char *fmt, ...);
 void panic(char*) __attribute__((noreturn));
 
+/*  interrupt.c */
+void init_interrupt();
 #endif
