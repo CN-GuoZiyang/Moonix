@@ -1,20 +1,20 @@
 #include "types.h"
 #include "riscv.h"
+#include "context.h"
 #include "defs.h"
 
+extern void __alltraps();
+
 void
-trap_handler()
-{
-    uint64 scause = r_scause();
-    uint64 sepc = r_sepc();
-    printf("Trap: scause: %p, sepc: %p\n", scause, sepc);
-    panic("Trap handled!");
-}__attribute__ ((aligned (4)))
+handle_trap(TrapFrame *tf) {
+    printf("handle trap!\n");
+    tf->sepc += 2;
+}
 
 void
 init_interrupt()
 {
     w_sscratch(0L);
-    w_stvec((uint64)trap_handler);
+    w_stvec((uint64)__alltraps);
     printf("---- setup interrupt ----\n");
 }

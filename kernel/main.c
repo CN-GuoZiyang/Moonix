@@ -8,5 +8,5 @@ main()
 {
     init_interrupt();
     asm volatile("ebreak");
-    printf("never return from trap\n");
+    printf("return from trap!\n");
 }

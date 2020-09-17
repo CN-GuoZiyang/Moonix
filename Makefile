@@ -3,6 +3,7 @@ K=kernel
 OBJS = $K/entry.o 		\
 		$K/printf.o		\
 		$K/interrupt.o	\
+		$K/trap.o		\
 		$K/main.o
 
 # 生成工具链前缀
