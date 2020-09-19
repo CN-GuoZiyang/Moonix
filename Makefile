@@ -4,6 +4,7 @@ OBJS = $K/entry.o 		\
 		$K/printf.o		\
 		$K/interrupt.o	\
 		$K/trap.o		\
+		$K/timer.o		\
 		$K/main.o
 
 # 生成工具链前缀
@@ -34,7 +35,7 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 LDFLAGS = -z max-page-size=4096
 
 QEMU = qemu-system-riscv64
-QEMUFLAGS = -machine virt -nographic -bios default -device loader,file=Image,addr=0x80200000
+QEMUFLAGS = -machine virt -bios default -device loader,file=Image,addr=0x80200000 -nographic
 
 all: Image
 
