@@ -88,4 +88,16 @@ r_time()
   return x;
 }
 
+static inline void
+w_satp(uint64 x)
+{
+    asm volatile("csrw satp, %0"::"r"(x));
+}
+
+static inline void
+flush_tlb()
+{
+    asm volatile("sfence.vma zero, zero");
+}
+
 #endif

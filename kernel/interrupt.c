@@ -36,7 +36,6 @@ handle_trap(TrapFrame *tf)
         handle_timer();
         break;
     default:
-        printf("undefined trap: %p!\n", tf->scause);
         break;
     }
 }

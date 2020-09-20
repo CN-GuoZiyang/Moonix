@@ -5,8 +5,8 @@ OBJS = $K/entry.o 				\
 		$K/interrupt.o			\
 		$K/trap.o				\
 		$K/timer.o				\
-		$K/frame_allocator.o	\
 		$K/memory.o				\
+		$K/paging.o				\
 		$K/main.o
 
 # 生成工具链前缀

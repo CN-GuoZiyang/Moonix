@@ -12,11 +12,11 @@ void init_interrupt();
 void set_next_clock();
 void init_timer();
 
-/*  frame_allocator.c   */
-void init_sta(uint64 l, uint64 r);
+/*  memory.c   */
 uint64 alloc();
 void dealloc(uint64 n);
-
-/*  memory.c    */
 void init_memory();
+
+/*  paging.c    */
+void remap_kernel();
 #endif
