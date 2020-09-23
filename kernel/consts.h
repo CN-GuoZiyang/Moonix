@@ -10,4 +10,11 @@
 #define PHYSICAL_MEMORY_OFFSET 0xffffffff40000000
 #define PDE_ADDRESS_MASK 0x003ffffffffffC00
 
+#define KERNEL_HEAP_SIZE 0x800000
+#define MIN_NODE_SIZE 0x10
+// 管理的块数
+#define BUDDY_MANAGE_BLOCK 0x80000
+// 二叉树节点数
+#define BUDDY_NODE_NUM 0xfffff
+
 #endif

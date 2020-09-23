@@ -17,6 +17,9 @@ uint64 alloc();
 void dealloc(uint64 n);
 void init_memory();
 
+/*  heap.c  */
+void init_buddy_system();
+
 /*  paging.c    */
 void remap_kernel();
 #endif

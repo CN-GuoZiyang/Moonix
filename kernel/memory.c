@@ -85,4 +85,5 @@ init_memory()
     printf("---- setup memory ----\n");
     remap_kernel();
     printf("---- remap kernel ----\n");
+    init_buddy_system();
 }
