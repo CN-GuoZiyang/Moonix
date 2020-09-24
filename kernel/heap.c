@@ -64,11 +64,8 @@ buddy_alloc(uint size)
         else
             index = RIGHT_LEAF(index);
     }
-    printf("index = %d\n", index);
     buddy_system.longest[index] = 0;
     offset = (index + 1) * node_size - buddy_system.size;
-
-    printf("alloc block = %d\n", offset);
 
     while(index) {
         index = PARENT(index);
@@ -129,7 +126,7 @@ malloc(uint size)
     for(i = beginaddr; i < endaddr; i ++) {
         *((uint *)i) = 0;
     }
-    return HEAP_SPACE + (uint64)(block << 4);
+    return (void *)beginaddr;
 }
 
 void

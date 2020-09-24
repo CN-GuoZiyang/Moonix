@@ -100,4 +100,12 @@ flush_tlb()
     asm volatile("sfence.vma zero, zero");
 }
 
+static inline uint64
+r_satp()
+{
+    uint64 x;
+    asm volatile("csrr %0, satp" : "=r" (x) );
+    return x;
+}
+
 #endif
