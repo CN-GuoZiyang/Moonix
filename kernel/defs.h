@@ -18,6 +18,10 @@ void dealloc(uint64 n);
 void init_memory();
 
 /*  heap.c  */
+void* malloc(uint size);
+void free(void* ptr);
+
+/*  heap.c  */
 void init_buddy_system();
 
 /*  paging.c    */
