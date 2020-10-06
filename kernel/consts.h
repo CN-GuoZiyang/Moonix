@@ -17,4 +17,6 @@
 // 二叉树节点数
 #define BUDDY_NODE_NUM 0xfffff
 
+#define KERNEL_STACK_SIZE 0x8000
+
 #endif

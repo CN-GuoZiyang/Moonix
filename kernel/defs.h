@@ -26,4 +26,6 @@ void init_buddy_system();
 
 /*  paging.c    */
 void remap_kernel();
+/*  process.c   */
+void init_process();
 #endif

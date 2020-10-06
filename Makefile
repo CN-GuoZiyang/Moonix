@@ -8,6 +8,7 @@ OBJS = $K/entry.o 				\
 		$K/memory.o				\
 		$K/paging.o				\
 		$K/heap.o				\
+		$K/process.o			\
 		$K/main.o
 
 # 生成工具链前缀

@@ -29,6 +29,7 @@ init_buddy_system()
         }
         buddy_system.longest[i] = node_size;
     }
+    printf("Heap starts from: %p to: %p\n", &HEAP_SPACE[0], &HEAP_SPACE[KERNEL_HEAP_SIZE-1]);
 }
 
 uint
