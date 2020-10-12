@@ -1,5 +1,6 @@
 #ifndef _DEFS_H
 #define _DEFS_H
+
 /*  printf.c    */
 void putchar(int c);
 void printf(char *fmt, ...);
@@ -28,4 +29,6 @@ void init_buddy_system();
 void remap_kernel();
 /*  process.c   */
 void init_process();
+void tick();
+
 #endif

@@ -9,6 +9,7 @@ OBJS = $K/entry.o 				\
 		$K/paging.o				\
 		$K/heap.o				\
 		$K/process.o			\
+		$K/scheduler.o			\
 		$K/main.o
 
 # 生成工具链前缀
@@ -59,3 +60,13 @@ asm: Image
 
 qemu: Image
 	$(QEMU) $(QEMUFLAGS)
+
+# try to generate a unique GDB port
+GDBPORT = $(shell expr `id -u` % 5000 + 25000)
+# QEMU's gdb stub command line changed in 0.11
+QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
+	then echo "-gdb tcp::$(GDBPORT)"; \
+	else echo "-s -p $(GDBPORT)"; fi)
+
+qemu-gdb: Image
+	$(QEMU) $(QEMUFLAGS) -S $(QEMUGDB)

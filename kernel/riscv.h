@@ -108,4 +108,24 @@ r_satp()
     return x;
 }
 
+static inline void
+enable_and_wfi()
+{
+    asm volatile("csrsi sstatus, 1 << 1; wfi");
+}
+
+static inline uint64
+disable_and_store()
+{
+    uint64 x;
+    asm volatile("csrci sstatus, 1 << 1" : "=r" (x) );
+    return (x & (1 << 1));
+}
+
+static inline void
+restore_sstatus(uint64 flags)
+{
+    asm volatile("csrs sstatus, %0" :: "r"(flags) );
+}
+
 #endif

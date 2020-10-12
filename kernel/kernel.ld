@@ -17,13 +17,6 @@ SECTIONS
         etext = .;
     }
 
-    .rodata : {
-        srodata = .;
-        *(.rodata .rodata.*)
-        . = ALIGN(4K);
-        erodata = .;
-    }
-
     .data : {
         sdata = .;
         *(.data .data.*)

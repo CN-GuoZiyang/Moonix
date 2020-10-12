@@ -19,4 +19,6 @@
 
 #define KERNEL_STACK_SIZE 0x8000
 
+#define MAX_THREAD_NUM 0x100
+
 #endif

@@ -4,17 +4,10 @@
 #include "defs.h"
 
 extern void __alltraps();
-extern uint64 TICKS;
+uint64 TICKS = 0;
 
 void
-handle_breakpoint(TrapFrame *tf)
-{
-    printf("A breakpoint is set at %p\n", tf->sepc);
-    tf->sepc += 2;
-}
-
-void
-handle_timer()
+super_timer()
 {
     set_next_clock();
     TICKS += 1;
@@ -22,6 +15,14 @@ handle_timer()
         TICKS = 0;
         printf("* 100 ticks *\n");
     }
+    tick();
+}
+
+void
+handle_breakpoint(TrapFrame *tf)
+{
+    printf("A breakpoint is set at %p\n", tf->sepc);
+    tf->sepc += 2;
 }
 
 void
@@ -33,9 +34,11 @@ handle_trap(TrapFrame *tf)
         handle_breakpoint(tf);
         break;
     case (1L<<63 | 5L):
-        handle_timer();
+        super_timer();
         break;
     default:
+        printf("unknown trap %p, sepc %p, stval %p\n", tf->scause, tf->sepc, tf->stval);
+        panic("");
         break;
     }
 }

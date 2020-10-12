@@ -8,8 +8,6 @@ typedef void *PageTablePaddr;
 
 extern void stext();
 extern void etext();
-extern void srodata();
-extern void erodata();
 
 MemoryAttr
 new_memory_attr()
@@ -105,14 +103,12 @@ remap_kernel()
     MemoryAttr ma = new_memory_attr();
     set_attr_readonly(&ma); set_attr_execute(&ma);
     set_pg_table(ptp, (uint64)stext, (uint64)etext, ma);
-
-    ma = new_memory_attr();
-    set_attr_readonly(&ma);
-    set_pg_table(ptp, (uint64)srodata, (uint64)erodata, ma);
+    printf("map from %p to %p\n", (uint64)stext, (uint64)etext);
 
     ma = new_memory_attr();
     set_attr_WR(&ma);
     set_pg_table(ptp, (uint64)etext, PHYSICAL_MEMORY_END + PHYSICAL_MEMORY_OFFSET, ma);
+    printf("map from %p to %p\n", (uint64)etext, PHYSICAL_MEMORY_END + PHYSICAL_MEMORY_OFFSET);
 
     activate_page_table(ptp);
 }
