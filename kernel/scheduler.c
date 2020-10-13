@@ -74,6 +74,6 @@ scheduler_exit(Tid tid)
 {
     tid = tid + 1;
     if(scheduler.current == tid) {
-        scheduler.current = 0;
+        scheduler.current = scheduler.threads[tid].next;
     }
 }

@@ -87,10 +87,6 @@ void switch_context(Context *self, Context *target) __attribute__((naked, noinli
 void
 switch_to_thread(Thread *self, Thread *target)
 {
-    printf("\nThread at %p\n", target);
-    printf("ContextContent at %p\n", target->context.content_addr);
-    printf("kernel stack at %p\n", target->kstack);
-    printf("new ra is %p\n", ((ContextContent *)(target->context.content_addr))->ra);
     switch_context(&self->context, &target->context);
 }
 
@@ -121,10 +117,9 @@ add_thread_to_thread_pool(ThreadPool *self, Thread *thread)
     ThreadInfo ti;
     ti.present = 1;
     ti.status = Ready;
-    ti.thread = *thread;
+    ti.thread = thread;
     self->threads[tid] = ti;
     scheduler_push(tid);
-    // printf("Tid to alloc %d\n", tid);
 }
 
 RunningThread
@@ -137,7 +132,7 @@ thread_pool_acquire(ThreadPool *self)
         ThreadInfo *ti = &self->threads[tid];
         ti->status = Running;
         ti->tid = tid;
-        rt.thread = &ti->thread;
+        rt.thread = ti->thread;
     }
     return rt;
 }
@@ -145,10 +140,10 @@ thread_pool_acquire(ThreadPool *self)
 void
 thread_pool_retrieve(ThreadPool *self, Tid tid, Thread *thread)
 {
-    ThreadInfo ti = self->threads[tid];
-    if(ti.present) {
-        ti.thread = *thread;
-        ti.status = Ready;
+    ThreadInfo *ti = &self->threads[tid];
+    if(ti->present) {
+        ti->thread = thread;
+        ti->status = Ready;
         scheduler_push(tid);
     }
 }
@@ -205,10 +200,6 @@ processor_run(Processor *self)
             enable_and_wfi();
             disable_and_store();
         }
-        // printf("run process 0\n");
-        // switch_to_thread(&self->idle, &self->pool.threads[0].thread);
-        // printf("run process 1\n");
-        // switch_to_thread(&self->idle, &self->pool.threads[1].thread);
     }
 }
 
@@ -272,5 +263,4 @@ init_process()
     add_thread_to_processor(&CPU, &t3);
     add_thread_to_processor(&CPU, &t4);
     processor_run(&CPU);
-    // switch_to_thread(&idle, &CPU.pool.threads[0].thread);
 }
