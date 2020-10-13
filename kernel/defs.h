@@ -1,32 +1,30 @@
-#ifndef _DEFS_H
-#define _DEFS_H
+#ifndef _DEF_H
+#define _DEF_H
 
-/*  printf.c    */
-void putchar(int c);
-void printf(char *fmt, ...);
+/* printf.c */
+void printf(char *, ...);
 void panic(char*) __attribute__((noreturn));
 
-/*  interrupt.c */
+/* interrupt.c */
 void init_interrupt();
 
-/*  timer.c */
-void set_next_clock();
+/* timer.c */
 void init_timer();
+void clock_set_next_event();
 
-/*  memory.c   */
-uint64 alloc();
-void dealloc(uint64 n);
+/* frame_allocator.c */
 void init_memory();
+uint64 alloc_frame();
+void dealloc_frame(uint64 n);
+
+/* paging.c */
+void remap_kernel();
 
 /*  heap.c  */
 void* malloc(uint size);
 void free(void* ptr);
-
-/*  heap.c  */
 void init_buddy_system();
 
-/*  paging.c    */
-void remap_kernel();
 /*  process.c   */
 void init_process();
 void tick();

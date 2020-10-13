@@ -23,7 +23,12 @@
                 : "memory");                                        \
     a0;                                                             \
 })
+
 #define SBI_ECALL_0(__num) SBI_ECALL(__num, 0, 0, 0)
 #define SBI_ECALL_1(__num, __a0) SBI_ECALL(__num, __a0, 0, 0)
 #define SBI_ECALL_2(__num, __a0, __a1) SBI_ECALL(__num, __a0, __a1, 0)
+
+#define SBI_PUTCHAR(__a0) SBI_ECALL_1(SBI_CONSOLE_PUTCHAR, __a0)
+#define SBI_TIMER(__a0) SBI_ECALL_1(SBI_SET_TIMER, __a0)
+
 #endif

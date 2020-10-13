@@ -8,7 +8,7 @@ static char digits[] = "0123456789abcdef";
 void
 putchar(int c)
 {
-    SBI_ECALL_1(SBI_CONSOLE_PUTCHAR, c);
+    SBI_PUTCHAR(c);
 }
 
 static void

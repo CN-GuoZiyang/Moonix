@@ -3,8 +3,11 @@
 
 typedef struct trapframe
 {
-    uint64 x[32];
-    uint64 sstatus, sepc, stval, scause;
+    uint64 x[32];       // General register
+    uint64 sstatus;     // Supervisor status register
+    uint64 sepc;        // Supervisor exception program counter
+    uint64 stval;       // Supervisor trap value
+    uint64 scause;      // Scause register
 } TrapFrame;
 
 typedef struct context

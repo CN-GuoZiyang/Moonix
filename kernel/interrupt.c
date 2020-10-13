@@ -1,28 +1,27 @@
 #include "types.h"
 #include "riscv.h"
-#include "context.h"
 #include "defs.h"
+#include "context.h"
 
 extern void __alltraps();
-uint64 TICKS = 0;
+extern int TICKS;
+
+void
+breakpoint(TrapFrame *tf)
+{
+    printf("a breakpoint set %p\n", tf->sepc);
+    tf->sepc += 2;
+}
 
 void
 super_timer()
 {
-    set_next_clock();
+    clock_set_next_event();
     TICKS += 1;
     if(TICKS == 100) {
         TICKS = 0;
         printf("* 100 ticks *\n");
     }
-    tick();
-}
-
-void
-handle_breakpoint(TrapFrame *tf)
-{
-    printf("A breakpoint is set at %p\n", tf->sepc);
-    tf->sepc += 2;
 }
 
 void
@@ -30,15 +29,14 @@ handle_trap(TrapFrame *tf)
 {
     switch (tf->scause)
     {
-    case 3:
-        handle_breakpoint(tf);
+    case 3L:
+        breakpoint(tf);
         break;
-    case (1L<<63 | 5L):
+    case 5L|(1L<<63):
         super_timer();
         break;
     default:
-        printf("unknown trap %p, sepc %p, stval %p\n", tf->scause, tf->sepc, tf->stval);
-        panic("");
+        panic("Undefined trap!");
         break;
     }
 }

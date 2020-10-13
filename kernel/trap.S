@@ -1,34 +1,31 @@
-# 常量：表示每个寄存器占的字节数，由于是64位，都是8字节
 .equ XLENB, 8
 
-# 将地址 sp+8*a2 处的值 load 到寄存器 a1 内
 .macro LOAD a1, a2
     ld \a1, \a2*XLENB(sp)
 .endm
 
-# 将寄存器 a1 内的值 store 到地址 sp+8*a2 内
 .macro STORE a1, a2
     sd \a1, \a2*XLENB(sp)
 .endm
 
-# 中断发生时保存所有寄存器到栈
 .macro SAVE_ALL
     csrrw sp, sscratch, sp
     bnez sp, trap_from_user
+
 trap_from_kernel:
     csrr sp, sscratch
 trap_from_user:
-    addi sp, sp, -36 * XLENB
+    addi sp, sp, -36*XLENB
     STORE x1, 1
-    STORE x3, 3
-    STORE x4, 4
-    STORE x5, 5
-    STORE x6, 6
-    STORE x7, 7
-    STORE x8, 8
-    STORE x9, 9
-    STORE x10, 10
-    STORE x11, 11
+	STORE x3, 3
+	STORE x4, 4
+	STORE x5, 5
+	STORE x6, 6
+	STORE x7, 7
+	STORE x8, 8
+	STORE x9, 9
+	STORE x10, 10
+	STORE x11, 11
     STORE x12, 12
     STORE x13, 13
     STORE x14, 14
@@ -66,10 +63,10 @@ trap_from_user:
 .macro RESTORE_ALL
     LOAD s1, 32
     LOAD s2, 33
-    andi s0, s1, 1 << 8
+    andi s0, s1, 1<<8
     bnez s0, _to_kernel
 _to_user:
-    addi s0, sp, 36 * XLENB
+    addi s0, sp, 36*XLENB
     csrw sscratch, s0
 _to_kernel:
     csrw sstatus, s1
@@ -104,14 +101,12 @@ _to_kernel:
     LOAD x29, 29
     LOAD x30, 30
     LOAD x31, 31
-
-	LOAD x2, 2
+    LOAD x2, 2
 .endm
-
 
     .section .text
     .globl __alltraps
-    .align 4
+    .balign 4
 __alltraps:
     SAVE_ALL
     mv a0, sp
