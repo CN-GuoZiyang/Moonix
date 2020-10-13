@@ -6,6 +6,8 @@
 #include "process.h"
 #include "scheduler.h"
 
+Processor CPU;
+
 KernelStack
 new_kernel_stack()
 {
@@ -157,6 +159,7 @@ thread_pool_tick()
 void
 thread_pool_exit(ThreadPool *self, Tid tid, uint64 code)
 {
+    drop_kernel_stack(self->threads[tid].thread->kstack);
     ThreadInfo ti;
     ti.status = Ready;
     ti.present = 0;
@@ -165,8 +168,6 @@ thread_pool_exit(ThreadPool *self, Tid tid, uint64 code)
     scheduler_exit(tid);
     printf("Exit code %d\n", code);
 }
-
-Processor CPU;
 
 void
 init_processor(Processor *self, Thread idle, ThreadPool *pool)
