@@ -22,6 +22,7 @@ super_timer()
         TICKS = 0;
         printf("* 100 ticks *\n");
     }
+    tick();
 }
 
 void
@@ -36,6 +37,7 @@ handle_trap(TrapFrame *tf)
         super_timer();
         break;
     default:
+        printf("scause %p, sepc %p, stval %p\n", tf->scause, tf->sepc, tf->stval);
         panic("Undefined trap!");
         break;
     }

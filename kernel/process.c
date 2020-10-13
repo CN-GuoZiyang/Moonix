@@ -87,6 +87,10 @@ void switch_context(Context *self, Context *target) __attribute__((naked, noinli
 void
 switch_to_thread(Thread *self, Thread *target)
 {
+    printf("\nThread at %p\n", target);
+    printf("ContextContent at %p\n", target->context.content_addr);
+    printf("kernel stack at %p\n", target->kstack);
+    printf("switch to %p\n", ((ContextContent *)(target->context.content_addr))->ra);
     switch_context(&self->context, &target->context);
 }
 
@@ -183,24 +187,38 @@ add_thread_to_processor(Processor *self, Thread thread)
     add_thread_to_thread_pool(&self->pool, thread);
 }
 
+Thread t0, t1;
+
 void
 processor_run(Processor *self)
 {
     disable_and_store();
+    RunningThread r0;
+    r0.tid = 0; r0.thread = t0;
+    RunningThread r1;
+    r1.tid = 1; r1.thread = t1;
     while(1) {
-        RunningThread thread = thread_pool_acquire(&self->pool);
-        if(thread.tid != -1) {
-            self->current = thread;
-            self->hasCurrent = 1;
-            printf("Process %d ready to run\n", thread.tid);
-            switch_to_thread(&self->idle, &self->current.thread);
-            RunningThread rt = self->current;
-            printf("Thread %d ran just now\n", rt.tid);
-            thread_pool_retrieve(&self->pool, rt.tid, rt.thread);
-        } else {
-            enable_and_wfi();
-            disable_and_store();
-        }
+        // RunningThread thread = thread_pool_acquire(&self->pool);
+        // if(thread.tid != -1) {
+        //     self->current = thread;
+        //     self->hasCurrent = 1;
+        //     printf("Process %d ready to run\n", thread.tid);
+        //     switch_to_thread(&self->idle, &self->current.thread);
+        //     RunningThread rt = self->current;
+        //     printf("\nThread %d ran just now\n", rt.tid);
+        //     thread_pool_retrieve(&self->pool, rt.tid, rt.thread);
+        // } else {
+        //     enable_and_wfi();
+        //     disable_and_store();
+        // }
+        self->current = r0;
+        self->hasCurrent = 1;
+        switch_to_thread(&self->idle, &self->current.thread);
+        printf("finish 0\n");
+        self->current = r1;
+        self->hasCurrent = 1;
+        switch_to_thread(&self->idle, &self->current.thread);
+
     }
 }
 
@@ -252,15 +270,15 @@ init_process()
     init_scheduler(1);
     ThreadPool pool;
     init_processor(&CPU, new_idle_thread(), pool);
-    Thread t0 = new_kernel_thread((uint64)hello_thread, 0);
-    Thread t1 = new_kernel_thread((uint64)hello_thread, 1);
-    Thread t2 = new_kernel_thread((uint64)hello_thread, 2);
-    Thread t3 = new_kernel_thread((uint64)hello_thread, 3);
-    Thread t4 = new_kernel_thread((uint64)hello_thread, 4);
+    t0 = new_kernel_thread((uint64)hello_thread, 0);
+    t1 = new_kernel_thread((uint64)hello_thread, 1);
+    // Thread t2 = new_kernel_thread((uint64)hello_thread, 2);
+    // Thread t3 = new_kernel_thread((uint64)hello_thread, 3);
+    // Thread t4 = new_kernel_thread((uint64)hello_thread, 4);
     add_thread_to_processor(&CPU, t0);
-    add_thread_to_processor(&CPU, t1);
-    add_thread_to_processor(&CPU, t2);
-    add_thread_to_processor(&CPU, t3);
-    add_thread_to_processor(&CPU, t4);
+    // add_thread_to_processor(&CPU, t1);
+    // add_thread_to_processor(&CPU, t2);
+    // add_thread_to_processor(&CPU, t3);
+    // add_thread_to_processor(&CPU, t4);
     processor_run(&CPU);
 }

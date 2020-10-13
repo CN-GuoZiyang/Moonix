@@ -1,7 +1,6 @@
 #include "types.h"
 #include "defs.h"
 #include "consts.h"
-#include "buddysystem.h"
 
 #define LEFT_LEAF(index) ((index) * 2 + 1)
 #define RIGHT_LEAF(index) ((index) * 2 + 2)
@@ -14,8 +13,11 @@
 
 static uint8 HEAP_SPACE[KERNEL_HEAP_SIZE];
 
-// 最小分配大小为16字节
-static Buddy buddy_system;
+static struct buddy
+{
+    uint size;
+    uint longest[BUDDY_NODE_NUM];
+} buddy_system;
 
 void
 init_buddy_system()

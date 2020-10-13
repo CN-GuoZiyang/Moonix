@@ -65,7 +65,7 @@ clean:
 	rm -f */*.d */*.o $K/kernel Image Image.asm
 
 asm: Image
-	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
+	$(OBJDUMP) -S $K/kernel > Image.asm
 
 qemu: Image
 	$(QEMU) $(QEMUOPTS)
