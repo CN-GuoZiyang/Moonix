@@ -36,9 +36,8 @@ typedef struct threadpool
 typedef struct runningthread
 {
     Tid tid;
-    Thread thread;
+    Thread *thread;
 } RunningThread;
-
 
 typedef struct processor
 {
