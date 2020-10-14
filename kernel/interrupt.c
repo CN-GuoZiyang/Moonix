@@ -26,12 +26,23 @@ super_timer()
 }
 
 void
+handle_syscall(TrapFrame *tf)
+{
+    tf->sepc += 4;
+    uint64 ret = syscall(tf->x[17], (uint64[]){tf->x[10], tf->x[11], tf->x[12]}, tf);
+    tf->x[10] = ret;
+}
+
+void
 handle_trap(TrapFrame *tf)
 {
     switch (tf->scause)
     {
     case 3L:
         breakpoint(tf);
+        break;
+    case 8L:
+        handle_syscall(tf);
         break;
     case 5L|(1L<<63):
         super_timer();

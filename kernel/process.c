@@ -257,16 +257,28 @@ hello_thread(uint64 arg)
 }
 
 void
+processor_run(Processor *self)
+{
+    Thread boot = get_boot_thread();
+    switch_to_thread(&boot, &self->idle);
+}
+
+void
+run()
+{
+    processor_run(&CPU);
+}
+
+void
 tick()
 {
     processor_tick(&CPU);
 }
 
 void
-processor_run(Processor *self)
+exit(uint64 code)
 {
-    Thread boot = get_boot_thread();
-    switch_to_thread(&boot, &self->idle);
+    processor_exit(&CPU, code);
 }
 
 void

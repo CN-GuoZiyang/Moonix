@@ -11,6 +11,7 @@ OBJS = 						\
 	$K/heap.o				\
 	$K/process.o			\
 	$K/scheduler.o			\
+	$K/syscall.o			\
 	$K/main.o
 
 # Try to infer the correct TOOLPREFIX if not set
