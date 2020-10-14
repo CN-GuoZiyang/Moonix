@@ -24,7 +24,7 @@ typedef struct threadinfo
     Status status;
     Tid tid;
     int present;
-    Thread *thread;
+    Thread thread;
 } ThreadInfo;
 
 typedef struct threadpool

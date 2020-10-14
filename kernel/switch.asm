@@ -35,8 +35,6 @@
     ld s9, 11*XLENB(sp)
     ld s10, 12*XLENB(sp)
     ld s11, 13*XLENB(sp)
-    mv a0, s0
-    csrw sstatus, s1
     addi sp, sp, (XLENB*14)
 
     sd zero, 0(a1)

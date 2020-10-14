@@ -20,6 +20,7 @@ typedef struct contextcontent
     uint64 ra;
     uint64 satp;
     uint64 s[12];
+    TrapFrame tf;
 } ContextContent;
 
 #endif

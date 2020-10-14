@@ -6,6 +6,8 @@
 #include "process.h"
 #include "scheduler.h"
 
+extern void __trapret();
+
 Processor CPU;
 
 KernelStack
@@ -35,7 +37,7 @@ new_null_context()
 }
 
 Thread
-new_idle_thread()
+get_boot_thread()
 {
     Context c = new_null_context();
     KernelStack k = new_kernel_stack();
@@ -46,13 +48,17 @@ new_idle_thread()
 }
 
 ContextContent
-new_kernel_context_content(uint64 entry, uint64 arg, uint64 kstack_top, uint64 satp)
+new_kernel_context_content(uint64 entry, uint64 kstack_top, uint64 satp)
 {
     ContextContent content;
-    content.ra = entry;
+    content.ra = (uint64)__trapret;
     content.satp = satp;
-    content.s[0] = arg;
-    content.s[1] = (r_sstatus() | SSTATUS_SPP);
+    TrapFrame tf;
+    tf.x[2] = kstack_top;
+    tf.sepc = entry;
+    tf.sstatus = r_sstatus() | SSTATUS_SPP | SSTATUS_SPIE;
+    tf.sstatus &= ~SSTATUS_SIE;
+    content.tf = tf;
     return content;
 }
 
@@ -67,18 +73,27 @@ push_content(ContextContent content, uint64 stack_top)
 }
 
 Context
-new_kernel_context(uint64 entry, uint64 arg, uint64 kstack_top, uint64 satp)
+new_kernel_context(uint64 entry, uint64 kstack_top, uint64 satp)
 {
-    ContextContent cc = new_kernel_context_content(entry, arg, kstack_top, satp);
+    ContextContent cc = new_kernel_context_content(entry, kstack_top, satp);
     return push_content(cc, kstack_top);
 }
 
+void
+append_initial_arguments(Thread *self, uint64 args[3])
+{
+    ContextContent *cc = (ContextContent *)(self->context.content_addr);
+    cc->tf.x[10] = args[0];
+    cc->tf.x[11] = args[1];
+    cc->tf.x[12] = args[2];
+}
+
 Thread
-new_kernel_thread(uint64 entry, uint64 arg)
+new_kernel_thread(uint64 entry)
 {
     KernelStack kstack = new_kernel_stack();
     Thread t;
-    Context c = new_kernel_context(entry, arg, top_kernel_stack(kstack), r_satp());
+    Context c = new_kernel_context(entry, top_kernel_stack(kstack), r_satp());
     t.context = c;
     t.kstack = kstack;
     return t;
@@ -113,7 +128,7 @@ alloc_tid(ThreadPool *self)
 }
 
 void
-add_thread_to_thread_pool(ThreadPool *self, Thread *thread)
+add_thread_to_thread_pool(ThreadPool *self, Thread thread)
 {
     Tid tid = alloc_tid(self);
     ThreadInfo ti;
@@ -134,7 +149,7 @@ thread_pool_acquire(ThreadPool *self)
         ThreadInfo *ti = &self->threads[tid];
         ti->status = Running;
         ti->tid = tid;
-        rt.thread = ti->thread;
+        rt.thread = &ti->thread;
     }
     return rt;
 }
@@ -144,7 +159,7 @@ thread_pool_retrieve(ThreadPool *self, Tid tid, Thread *thread)
 {
     ThreadInfo *ti = &self->threads[tid];
     if(ti->present) {
-        ti->thread = thread;
+        ti->thread = *thread;
         ti->status = Ready;
         scheduler_push(tid);
     }
@@ -159,7 +174,7 @@ thread_pool_tick()
 void
 thread_pool_exit(ThreadPool *self, Tid tid, uint64 code)
 {
-    drop_kernel_stack(self->threads[tid].thread->kstack);
+    drop_kernel_stack(self->threads[tid].thread.kstack);
     ThreadInfo ti;
     ti.status = Ready;
     ti.present = 0;
@@ -178,13 +193,13 @@ init_processor(Processor *self, Thread idle, ThreadPool *pool)
 }
 
 void
-add_thread_to_processor(Processor *self, Thread *thread)
+add_thread_to_processor(Processor *self, Thread thread)
 {
     add_thread_to_thread_pool(&self->pool, thread);
 }
 
 void
-processor_run(Processor *self)
+idle_main(Processor *self)
 {
     disable_and_store();
     while(1) {
@@ -248,20 +263,25 @@ tick()
 }
 
 void
+processor_run(Processor *self)
+{
+    Thread boot = get_boot_thread();
+    switch_to_thread(&boot, &self->idle);
+}
+
+void
 init_process()
 {
     init_scheduler(1);
     ThreadPool pool;
-    init_processor(&CPU, new_idle_thread(), &pool);
-    Thread t0 = new_kernel_thread((uint64)hello_thread, 0);
-    Thread t1 = new_kernel_thread((uint64)hello_thread, 1);
-    Thread t2 = new_kernel_thread((uint64)hello_thread, 2);
-    Thread t3 = new_kernel_thread((uint64)hello_thread, 3);
-    Thread t4 = new_kernel_thread((uint64)hello_thread, 4);
-    add_thread_to_processor(&CPU, &t0);
-    add_thread_to_processor(&CPU, &t1);
-    add_thread_to_processor(&CPU, &t2);
-    add_thread_to_processor(&CPU, &t3);
-    add_thread_to_processor(&CPU, &t4);
+    Thread idle = new_kernel_thread((uint64)idle_main);
+    append_initial_arguments(&idle, (uint64[]){(uint64)&CPU, 0, 0});
+    init_processor(&CPU, idle, &pool);
+    int i;
+    for(i = 0; i < 5; i ++) {
+        Thread t = new_kernel_thread((uint64)hello_thread);
+        append_initial_arguments(&t, (uint64[]){i, 0, 0});
+        add_thread_to_processor(&CPU, t);
+    }
     processor_run(&CPU);
 }
