@@ -6,29 +6,34 @@ typedef enum syscallid {
     Exit = 93,
 } SyscallId;
 
-inline uint64
-sys_call(SyscallId syscall_id, uint64 arg0, uint64 arg1, uint64 arg2, uint64 arg3)
-{
-    uint64 id = syscall_id;
-    uint64 ret;
-    asm volatile("ecall"
-                : "={x10}"(ret)
-                : "{x17}"(id), "{x10}"(arg0), "x11"(arg1), "{x12}"(arg2), "{x13}"(arg3)
-                : "memory");
-    return ret;
-}
+#define sys_call(__num, __a0, __a1, __a2, __a3)                          \
+({                                                                  \
+    register unsigned long a0 asm("a0") = (unsigned long)(__a0);    \
+    register unsigned long a1 asm("a1") = (unsigned long)(__a1);    \
+    register unsigned long a2 asm("a2") = (unsigned long)(__a2);    \
+    register unsigned long a3 asm("a3") = (unsigned long)(__a3);    \
+    register unsigned long a7 asm("a7") = (unsigned long)(__num);   \
+    asm volatile("ecall"                                            \
+                : "+r"(a0)                                          \
+                : "r"(a1), "r"(a2), "r"(a3), "r"(a7)                         \
+                : "memory");                                        \
+    a0;                                                             \
+})
 
-uint64
-sys_write(uint8 ch)
-{
-    return sys_call(Write, (uint64)ch, 0, 0, 0);
-}
+#define sys_write(__a0) sys_call(Write, __a0, 0, 0, 0)
+#define sys_exit(__a0) sys_call(Exit, __a0, 0, 0, 0)
 
-void
-sys_exit(uint64 code)
-{
-    sys_call(Exit, code, 0, 0, 0);
-    while(1) {}
-}
+// uint64
+// sys_write(uint8 ch)
+// {
+//     return sys_call(Write, (uint64)ch, 0, 0, 0);
+// }
+
+// void
+// sys_exit(uint64 code)
+// {
+//     sys_call(Exit, code, 0, 0, 0);
+//     while(1) {}
+// }
 
 #endif

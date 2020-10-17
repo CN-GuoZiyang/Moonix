@@ -1,4 +1,5 @@
 K=kernel
+U=user
 
 OBJS = 						\
 	$K/entry.o				\
@@ -13,6 +14,11 @@ OBJS = 						\
 	$K/scheduler.o			\
 	$K/syscall.o			\
 	$K/main.o
+
+UPROS =						\
+	$U/entry.o				\
+	$U/printf.o				\
+	$U/hello.o
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX
@@ -54,16 +60,26 @@ LDFLAGS = -z max-page-size=4096
 
 all: Image
 
-Image: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
+Image: User Kernel
+
+
+Kernel: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS)
 	$(OBJCOPY) $K/kernel --strip-all -O binary $@
+
+User: $(subst .c,.o,$(wildcard $U/*.c)) $(subst .S,.o,$(wildcard $U/*.S))
+	$(LD) $(LDFLAGS) -o $U/User $(UPROS)
+	$(OBJCOPY) $U/User --strip-all -O binary $@
 
 # compile all .c and .S file to .o file
 $K/%.o: $K/%.c $K/%.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$U/%.o: $U/%.c $U/%.S
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -f */*.d */*.o $K/kernel Image Image.asm
+	rm -f */*.d */*.o $K/kernel $U/User User Kernel Image Image.asm
 
 asm: Image
 	$(OBJDUMP) -S $K/kernel > Image.asm
