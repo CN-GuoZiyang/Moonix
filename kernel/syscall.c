@@ -23,7 +23,8 @@ syscall(uint64 id, uint64 args[3], TrapFrame *tf)
         sys_exit(args[0]);
         return 0;
     default:
-        panic("Unknown syscall id %d\n", id);
+        printf("Unknown syscall id %d\n", id);
+        panic("");
         return -1;
     }
 }

@@ -25,6 +25,8 @@ super_timer()
     tick();
 }
 
+extern uint64 syscall(uint64 id, uint64 args[3], TrapFrame *tf);
+
 void
 handle_syscall(TrapFrame *tf)
 {

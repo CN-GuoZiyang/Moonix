@@ -31,7 +31,4 @@ void tick();
 void run();
 void exit(uint64 code);
 
-/*  syscall.c   */
-uint64 syscall(uint64 id, uint64 args[3], TrapFrame *tf);
-
 #endif
