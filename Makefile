@@ -13,6 +13,7 @@ OBJS = 						\
 	$K/process.o			\
 	$K/scheduler.o			\
 	$K/syscall.o			\
+	$K/link_user.o			\
 	$K/main.o
 
 UPROS =						\
@@ -62,14 +63,13 @@ all: Image
 
 Image: User Kernel
 
-
 Kernel: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS)
-	$(OBJCOPY) $K/kernel --strip-all -O binary $@
-
+	$(OBJCOPY) $K/kernel -O binary Image
+	
 User: $(subst .c,.o,$(wildcard $U/*.c)) $(subst .S,.o,$(wildcard $U/*.S))
 	$(LD) $(LDFLAGS) -o $U/User $(UPROS)
-	$(OBJCOPY) $U/User --strip-all -O binary $@
+	$(OBJCOPY) $U/User -O binary $@
 
 # compile all .c and .S file to .o file
 $K/%.o: $K/%.c $K/%.S
