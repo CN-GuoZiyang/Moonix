@@ -1,4 +1,4 @@
-# Moonix
+# 🌕 Moonix
 
 > Yet another RISC-V operating system in C
 
