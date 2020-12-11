@@ -3,13 +3,13 @@
 #include "sbi.h"
 
 void
-console_putchar(usize c)
+consolePutchar(usize c)
 {
     SBI_ECALL_1(SBI_CONSOLE_PUTCHAR, c);
 }
 
 usize
-console_getchar()
+consoleGetchar()
 {
     return SBI_ECALL_0(SBI_CONSOLE_GETCHAR);
 }
@@ -19,4 +19,10 @@ shutdown()
 {
     SBI_ECALL_0(SBI_SHUTDOWN);
     while(1) {}
+}
+
+void
+setTimer(usize time)
+{
+    SBI_ECALL_1(SBI_SET_TIMER, time);
 }

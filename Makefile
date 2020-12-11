@@ -1,9 +1,10 @@
 K=kernel
 
 OBJS = 						\
-	$K/entry.o				\
-	$K/io.o					\
+	$K/sbi.o				\
 	$K/printf.o				\
+	$K/interrupt.o			\
+	$K/timer.o				\
 	$K/main.o
 
 # 设置交叉编译工具链
@@ -35,15 +36,12 @@ all: Image
 
 Image: Kernel
 
-Kernel: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
+Kernel: $(subst .c,.o,$(wildcard $K/*.c))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
 
-# compile all .c and .S file to .o file
-$K/%.o: $K/%.c $K/%.S
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$U/%.o: $U/%.c $U/%.S
+# compile all .c file to .o file
+$K/%.o: $K/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

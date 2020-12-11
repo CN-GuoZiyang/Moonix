@@ -26,17 +26,17 @@ printint(int xx, int base, int sign)
         buf[i++] = '-';
 
     while (--i >= 0)
-        console_putchar(buf[i]);
+        consolePutchar(buf[i]);
 }
 
 static void
 printptr(usize x)
 {
     int i;
-    console_putchar('0');
-    console_putchar('x');
+    consolePutchar('0');
+    consolePutchar('x');
     for (i = 0; i < (sizeof(usize) * 2); i++, x <<= 4)
-        console_putchar(digits[x >> (sizeof(usize) * 8 - 4)]);
+        consolePutchar(digits[x >> (sizeof(usize) * 8 - 4)]);
 }
 
 void printf(char *fmt, ...)
@@ -53,7 +53,7 @@ void printf(char *fmt, ...)
     {
         if (c != '%')
         {
-            console_putchar(c);
+            consolePutchar(c);
             continue;
         }
         c = fmt[++i] & 0xff;
@@ -74,14 +74,14 @@ void printf(char *fmt, ...)
             if ((s = va_arg(ap, char *)) == 0)
                 s = "(null)";
             for (; *s; s++)
-                console_putchar(*s);
+                consolePutchar(*s);
             break;
         case '%':
-            console_putchar('%');
+            consolePutchar('%');
             break;
         default:
-            console_putchar('%');
-            console_putchar(c);
+            consolePutchar('%');
+            consolePutchar(c);
             break;
         }
     }
