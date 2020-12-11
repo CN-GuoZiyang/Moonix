@@ -1,6 +1,5 @@
 K=kernel
 
-
 OBJS = 						\
 	$K/entry.o				\
 	$K/io.o					\

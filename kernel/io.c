@@ -5,18 +5,18 @@
 void
 console_putchar(usize c)
 {
-    SBI_ECALL(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+    SBI_ECALL_1(SBI_CONSOLE_PUTCHAR, c);
 }
 
 usize
 console_getchar()
 {
-    return SBI_ECALL(SBI_CONSOLE_GETCHAR, 0, 0, 0);
+    return SBI_ECALL_0(SBI_CONSOLE_GETCHAR);
 }
 
 void
 shutdown()
 {
-    SBI_ECALL(SBI_SHUTDOWN, 0, 0, 0);
+    SBI_ECALL_0(SBI_SHUTDOWN);
     while(1) {}
 }

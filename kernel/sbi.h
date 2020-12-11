@@ -1,6 +1,7 @@
-// SBI 调用号
 #ifndef _SBI_H
 #define _SBI_H
+
+// SBI 调用号
 #define SBI_SET_TIMER               0x0
 #define SBI_CONSOLE_PUTCHAR         0x1
 #define SBI_CONSOLE_GETCHAR         0x2
