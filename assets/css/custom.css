@@ -69,3 +69,10 @@ body {
   top: calc(50% - 1.25em);
   left: calc(50% - 1.25em);
 }
+
+.alert.callout {
+  border-top: 0px !important;
+  border-bottom: 0px !important;
+  border-right: 0px !important;
+  background: var(--code-theme-background) !important;
+}
