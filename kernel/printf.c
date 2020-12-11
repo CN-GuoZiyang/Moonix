@@ -49,40 +49,37 @@ void printf(char *fmt, ...)
         panic("null fmt");
 
     va_start(ap, fmt);
-    for (i = 0; (c = fmt[i] & 0xff) != 0; i++)
-    {
-        if (c != '%')
-        {
+    for (i = 0; (c = fmt[i] & 0xff) != 0; i++) {
+        if (c != '%') {
             consolePutchar(c);
             continue;
         }
         c = fmt[++i] & 0xff;
         if (c == 0)
             break;
-        switch (c)
-        {
-        case 'd':
-            printint(va_arg(ap, int), 10, 1);
-            break;
-        case 'x':
-            printint(va_arg(ap, int), 16, 1);
-            break;
-        case 'p':
-            printptr(va_arg(ap, usize));
-            break;
-        case 's':
-            if ((s = va_arg(ap, char *)) == 0)
-                s = "(null)";
-            for (; *s; s++)
-                consolePutchar(*s);
-            break;
-        case '%':
-            consolePutchar('%');
-            break;
-        default:
-            consolePutchar('%');
-            consolePutchar(c);
-            break;
+        switch (c) {
+            case 'd':
+                printint(va_arg(ap, int), 10, 1);
+                break;
+            case 'x':
+                printint(va_arg(ap, int), 16, 1);
+                break;
+            case 'p':
+                printptr(va_arg(ap, usize));
+                break;
+            case 's':
+                if ((s = va_arg(ap, char *)) == 0)
+                    s = "(null)";
+                for (; *s; s++)
+                    consolePutchar(*s);
+                break;
+            case '%':
+                consolePutchar('%');
+                break;
+            default:
+                consolePutchar('%');
+                consolePutchar(c);
+                break;
         }
     }
 }
