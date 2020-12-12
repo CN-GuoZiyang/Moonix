@@ -12,9 +12,9 @@ initInterrupt()
     // 设置 stvec 寄存器，设置中断处理函数和处理模式
     extern void __interrupt();
     w_stvec((usize)__interrupt | MODE_DIRECT);
-
     // 初始化时钟中断
     extern void initTimer(); initTimer();
+    printf("***** Init Interrupt *****\n");
 }
 
 void
