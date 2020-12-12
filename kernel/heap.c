@@ -1,6 +1,6 @@
 #include "types.h"
 #include "def.h"
-#include "consts.h"
+#include "heap.h"
 
 #define LEFT_LEAF(index) ((index) * 2 + 1)
 #define RIGHT_LEAF(index) ((index) * 2 + 2)

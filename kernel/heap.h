@@ -1,5 +1,5 @@
-#ifndef _CONSTS_H
-#define _CONSTS_H
+#ifndef _HEAP_H
+#define _HEAP_H
 
 // 动态内存分配相关常量
 #define KERNEL_HEAP_SIZE    0x800000        // 堆空间大小
