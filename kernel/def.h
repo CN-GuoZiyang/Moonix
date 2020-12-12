@@ -16,4 +16,8 @@ void panic(char*) __attribute__((noreturn));
 /*  interrupt.c */
 void initInterrupt();
 
+/*  heap.c  */
+void *malloc(uint32 size);
+void free(void *ptr);
+
 #endif

@@ -5,6 +5,7 @@ OBJS = 						\
 	$K/printf.o				\
 	$K/interrupt.o			\
 	$K/timer.o				\
+	$K/heap.o				\
 	$K/main.o
 
 # 设置交叉编译工具链
