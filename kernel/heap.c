@@ -21,18 +21,24 @@ struct
 } buddyTree;
 
 void
-initHeap()
+buddyInit(int size)
 {
-    buddyTree.size = HEAP_BLOCK_NUM;
-    uint32 nodeSize = HEAP_BLOCK_NUM << 1;
+    buddyTree.size = size;
+    uint32 nodeSize = size << 1;
     int i;
     // 初始化每个节点，此时每一块都是空闲的
-    for(i = 0; i < BUDDY_NODE_NUM; i ++) {
+    for(i = 0; i < (size << 1) - 1; i ++) {
         if(IS_POWER_OF_2(i+1)) {
             nodeSize /= 2;
         }
         buddyTree.longest[i] = nodeSize;
     }
+}
+
+void
+initHeap()
+{
+    buddyInit(HEAP_BLOCK_NUM);
 }
 
 uint32
@@ -67,11 +73,25 @@ buddyAlloc(uint32 size)
     }
 
     // 寻找第一个符合大小的节点
+    // for(nodeSize = buddyTree.size; nodeSize != size; nodeSize /= 2) {
+    //     if(buddyTree.longest[LEFT_LEAF(index)] >= size) {
+    //         index = LEFT_LEAF(index);
+    //     } else {
+    //         index = RIGHT_LEAF(index);
+    //     }
+    // }
+    
+    // 寻找大小最符合的节点
     for(nodeSize = buddyTree.size; nodeSize != size; nodeSize /= 2) {
-        if(buddyTree.longest[LEFT_LEAF(index)] >= size) {
-            index = LEFT_LEAF(index);
+        uint32 left = buddyTree.longest[LEFT_LEAF(index)];
+        uint32 right = buddyTree.longest[RIGHT_LEAF(index)];
+        // 优先选择最小的且满足条件的分叉，小块优先，尽量保留大块
+        if(left <= right) {
+            if(left >= size) index = LEFT_LEAF(index);
+            else index = RIGHT_LEAF(index);
         } else {
-            index = RIGHT_LEAF(index);
+            if(right >= size) index = RIGHT_LEAF(index);
+            else index = LEFT_LEAF(index);
         }
     }
 
@@ -156,9 +176,8 @@ void
 free(void *ptr)
 {
     if((usize)ptr < (usize)HEAP) return;
-    if((usize)ptr >= (usize)HEAP + KERNEL_HEAP_SIZE - MIN_BLOCK_SIZE) return;
+    if((usize)ptr > (usize)HEAP + KERNEL_HEAP_SIZE - MIN_BLOCK_SIZE) return;
     // 相对于堆空间起始地址的偏移
     uint32 offset = (usize)((usize)ptr - (usize)HEAP);
-    if(!IS_POWER_OF_2(offset)) return;
     buddyFree(offset >> 6);
 }

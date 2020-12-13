@@ -9,10 +9,10 @@ extern void kernel_end();
 #define PAGE_SIZE 4096
 
 // 可以访问的内存区域起始地址
-#define PHYSICAL_MEMORY_START 0x80000000
+#define MEMORY_START_PADDR 0x80000000
 
 // 可以访问的内存区域结束地址
-#define PHYSICAL_MEMORY_END 0x88000000
+#define MEMORY_END_PADDR 0x88000000
 
 // 内核起始的物理地址
 #define KERNEL_BEGIN_PADDR 0x80200000
