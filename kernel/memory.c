@@ -51,9 +51,13 @@ initMemory()
 
 struct
 {
+    // 线段树的节点，每个都表示该范围内是否有空闲页
     uint8 a[MAX_PHYSICAL_PAGES << 1];
+    // 第一个单页节点在 a 中的下标
     usize m;
+    // 分配区间长度
     usize n;
+    // 分配的起始 ppn
     usize offset;
 } sta;
 
