@@ -7,6 +7,7 @@ OBJS = 						\
 	$K/timer.o				\
 	$K/heap.o				\
 	$K/memory.o				\
+	$K/mapping.o			\
 	$K/main.o
 
 # 设置交叉编译工具链

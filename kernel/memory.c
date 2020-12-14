@@ -1,6 +1,7 @@
 #include "types.h"
 #include "def.h"
 #include "memory.h"
+#include "consts.h"
 
 // 全局页帧分配器
 FrameAllocator frameAllocator;
@@ -41,7 +42,7 @@ void
 initMemory()
 {
     initFrameAllocator(
-        (((usize)(kernel_end) - KERNEL_BEGIN_VADDR + KERNEL_BEGIN_PADDR) >> 12) + 1,
+        (((usize)(kernel_end) - KERNEL_MAP_OFFSET) >> 12) + 1,
         MEMORY_END_PADDR >> 12
     );
     extern void initHeap(); initHeap();

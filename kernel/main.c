@@ -21,5 +21,7 @@ main()
 {
     initInterrupt();
     extern void initMemory(); initMemory();
-    testAlloc();
+    extern void mapKernel(); mapKernel();
+    printf("Safe and sound!\n");
+    while(1) {}
 }
