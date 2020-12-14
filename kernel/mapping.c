@@ -44,6 +44,7 @@ PageTableEntry
     return entry;
 }
 
+// 线性映射一个段，填充页表
 void
 mapLinarSegment(Mapping self, Segment segment)
 {
@@ -62,6 +63,7 @@ mapLinarSegment(Mapping self, Segment segment)
     }
 }
 
+// 激活页表
 void
 activateMapping(Mapping self)
 {
@@ -70,6 +72,7 @@ activateMapping(Mapping self)
     asm volatile("sfence.vma":::);
 }
 
+// 映射内核，并返回页表（不激活）
 Mapping
 newKernelMapping()
 {
@@ -118,6 +121,7 @@ newKernelMapping()
     return m;
 }
 
+// 映射内核
 void
 mapKernel()
 {
