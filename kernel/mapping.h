@@ -31,7 +31,7 @@ typedef struct
     usize flags;
 } Segment;
 
-// 某个线程的内存映射关系
+// 某个进程的内存映射关系
 typedef struct
 {
     // 根页表的物理页号
