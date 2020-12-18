@@ -8,6 +8,7 @@ OBJS = 						\
 	$K/heap.o				\
 	$K/memory.o				\
 	$K/mapping.o			\
+	$K/thread.o				\
 	$K/main.o
 
 # 设置交叉编译工具链
@@ -27,6 +28,7 @@ CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
+
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
 # ld 链接选项

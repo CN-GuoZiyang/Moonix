@@ -12,6 +12,14 @@ typedef struct
     usize sstatus;
     // 中断返回地址
     usize sepc;
-} Context;
+} InterruptContext;
+
+// 线程运行上下文
+typedef struct {
+    usize ra;
+    usize satp;
+    usize s[12];
+    InterruptContext ic;
+} ThreadContext;
 
 #endif

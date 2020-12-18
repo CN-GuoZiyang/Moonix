@@ -10,7 +10,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 // 用于分配的堆空间，8 MBytes
-const static uint8 HEAP[KERNEL_HEAP_SIZE];
+static uint8 HEAP[KERNEL_HEAP_SIZE];
 
 struct
 {

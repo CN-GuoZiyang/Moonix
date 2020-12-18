@@ -33,4 +33,7 @@ extern void kernel_end();
 // 从 PageTableEntry 中获取物理页号
 #define PDE_MASK            0x003ffffffffffC00
 
+// 内核栈大小
+#define KERNEL_STACK_SIZE   0x80000
+
 #endif

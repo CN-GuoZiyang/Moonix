@@ -6,9 +6,10 @@ asm(".include \"kernel/entry.asm\"");
 void
 main()
 {
-    initInterrupt();
-    extern void initMemory(); initMemory();
-    extern void mapKernel(); mapKernel();
-    printf("Safe and sound!\n");
+    printf("Welcome to Moonix!\n");
+    extern void initInterrupt();    initInterrupt();
+    extern void initMemory();       initMemory();
+    extern void mapKernel();        mapKernel();
+    extern void initThread();       initThread();
     while(1) {}
 }

@@ -18,7 +18,7 @@ initInterrupt()
 }
 
 void
-breakpoint(Context *context)
+breakpoint(InterruptContext *context)
 {
     printf("Breakpoint at %p\n", context->sepc);
     // ebreak 指令长度 2 字节，返回后跳过该条指令
@@ -26,14 +26,14 @@ breakpoint(Context *context)
 }
 
 void
-supervisorTimer(Context *context)
+supervisorTimer()
 {
     extern void tick();
     tick();
 }
 
 void
-fault(Context *context, usize scause, usize stval)
+fault(InterruptContext *context, usize scause, usize stval)
 {
     printf("Unhandled interrupt!\nscause\t= %p\nsepc\t= %p\nstval\t= %p\n",
         scause,
@@ -44,7 +44,7 @@ fault(Context *context, usize scause, usize stval)
 }
 
 void
-handleInterrupt(Context *context, usize scause, usize stval)
+handleInterrupt(InterruptContext *context, usize scause, usize stval)
 {
     switch (scause)
     {
@@ -52,7 +52,7 @@ handleInterrupt(Context *context, usize scause, usize stval)
         breakpoint(context);
         break;
     case SUPERVISOR_TIMER:
-        supervisorTimer(context);
+        supervisorTimer();
         break;
     default:
         fault(context, scause, stval);
