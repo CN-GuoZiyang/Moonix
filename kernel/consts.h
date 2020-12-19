@@ -36,4 +36,7 @@ extern void kernel_end();
 // 内核栈大小
 #define KERNEL_STACK_SIZE   0x80000
 
+// 线程池最大线程数
+#define MAX_THREAD          0x40
+
 #endif

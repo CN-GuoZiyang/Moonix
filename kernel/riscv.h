@@ -67,4 +67,27 @@ r_satp()
     return x;
 }
 
+// 打开异步中断
+static inline void
+enable_and_wfi()
+{
+    asm volatile("csrsi sstatus, 1 << 1; wfi");
+}
+
+// 关闭异步中断并保存原先的 sstatus
+static inline usize
+disable_and_store()
+{
+    usize x;
+    asm volatile("csrrci %0, sstatus, 1 << 1" : "=r" (x) );
+    return x;
+}
+
+// 恢复之前保存的 sstatus
+static inline void
+restore_sstatus(usize flags)
+{
+    asm volatile("csrs sstatus, %0" :: "r"(flags) );
+}
+
 #endif

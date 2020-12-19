@@ -9,6 +9,9 @@ OBJS = 						\
 	$K/memory.o				\
 	$K/mapping.o			\
 	$K/thread.o				\
+	$K/threadpool.o			\
+	$K/processor.o			\
+	$K/rrscheduler.o		\
 	$K/main.o
 
 # 设置交叉编译工具链

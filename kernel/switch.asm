@@ -1,41 +1,53 @@
-.equ XLENB, 8
+.equ    REG_SIZE, 8
+.altmacro
+# 宏：保存寄存器到栈上
+.macro SAVE reg, offset
+    sd  \reg, \offset*REG_SIZE(sp)
+.endm
 
-    addi  sp, sp, (-XLENB*14)
-    sd sp, 0(a0)
-    sd ra, 0*XLENB(sp)
-    sd s0, 2*XLENB(sp)
-    sd s1, 3*XLENB(sp)
-    sd s2, 4*XLENB(sp)
-    sd s3, 5*XLENB(sp)
-    sd s4, 6*XLENB(sp)
-    sd s5, 7*XLENB(sp)
-    sd s6, 8*XLENB(sp)
-    sd s7, 9*XLENB(sp)
-    sd s8, 10*XLENB(sp)
-    sd s9, 11*XLENB(sp)
-    sd s10, 12*XLENB(sp)
-    sd s11, 13*XLENB(sp)
-    csrr  s11, satp
-    sd s11, 1*XLENB(sp)
+# 将寄存器 s_n 保存到栈的 (n+2) * REGSIZE 位置
+.macro SAVE_N n
+    SAVE  s\n, (\n+2)
+.endm
 
-    ld sp, 0(a1)
-    ld s11, 1*XLENB(sp)
-    csrw satp, s11
+# 宏：从栈中恢复寄存器
+.macro LOAD reg, offset
+    ld  \reg, \offset*REG_SIZE(sp)
+.endm
+
+.macro LOAD_N n
+    LOAD  s\n, (\n+2)
+.endm
+
+    # 分配栈空间，用于保存 ThreadContext
+    addi    sp, sp, (-REG_SIZE*14)
+    # 更新入参的当前线程栈顶地址
+    sd      sp, 0(a0)
+    # 依次保存各个寄存器的值
+    SAVE    ra, 0
+    .set    n, 0
+    .rept   12
+        SAVE_N  %n
+        .set    n, n + 1
+    .endr
+    csrr    s11, satp
+    SAVE    s11, 1
+
+    # 准备恢复到目标线程，首先切换栈
+    ld      sp, 0(a1)
+    LOAD    s11, 1
+    # 恢复页表寄存器并刷新 TLB
+    csrw    satp, s11
     sfence.vma
-    ld ra, 0*XLENB(sp)
-    ld s0, 2*XLENB(sp)
-    ld s1, 3*XLENB(sp)
-    ld s2, 4*XLENB(sp)
-    ld s3, 5*XLENB(sp)
-    ld s4, 6*XLENB(sp)
-    ld s5, 7*XLENB(sp)
-    ld s6, 8*XLENB(sp)
-    ld s7, 9*XLENB(sp)
-    ld s8, 10*XLENB(sp)
-    ld s9, 11*XLENB(sp)
-    ld s10, 12*XLENB(sp)
-    ld s11, 13*XLENB(sp)
-    addi sp, sp, (XLENB*14)
+    # 依次加载各个寄存器
+    LOAD    ra, 0
+    .set    n, 0
+    .rept   12
+        LOAD_N  %n
+        .set    n, n + 1
+    .endr
+    # 回收栈空间
+    addi    sp, sp, (REG_SIZE*14)
 
-    sd zero, 0(a1)
+    sd      zero, 0(a1)
     ret

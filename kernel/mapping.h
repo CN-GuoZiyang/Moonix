@@ -4,8 +4,10 @@
 #include "types.h"
 #include "consts.h"
 
+// 页表项长度 64 位
 typedef usize PageTableEntry;
 
+// 一页页表中可存储 4096 / 8 个页表项
 typedef struct
 {
     PageTableEntry entries[PAGE_SIZE >> 3];
@@ -38,6 +40,7 @@ typedef struct
     usize rootPpn;
 } Mapping;
 
+// 访问通过内核线性映射的虚拟地址
 usize accessVaViaPa(usize pa);
 
 #endif

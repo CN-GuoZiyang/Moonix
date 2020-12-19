@@ -12,11 +12,10 @@ initInterrupt()
     // 设置 stvec 寄存器，设置中断处理函数和处理模式
     extern void __interrupt();
     w_stvec((usize)__interrupt | MODE_DIRECT);
-    // 初始化时钟中断
-    extern void initTimer(); initTimer();
     printf("***** Init Interrupt *****\n");
 }
 
+// 断点中断，打印信息并跳转到下一条指令
 void
 breakpoint(InterruptContext *context)
 {
@@ -25,13 +24,15 @@ breakpoint(InterruptContext *context)
     context->sepc += 2;
 }
 
+// 时钟中断，主要用于调度
 void
 supervisorTimer()
 {
-    extern void tick();
-    tick();
+    extern void tick(); tick();
+    extern void tickCPU(); tickCPU();
 }
 
+// 未知错误直接打印信息并关机
 void
 fault(InterruptContext *context, usize scause, usize stval)
 {

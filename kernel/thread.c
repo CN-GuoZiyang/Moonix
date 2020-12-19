@@ -7,6 +7,7 @@
 usize
 newKernelStack()
 {
+    // 将内核线程的线程栈分配在堆空间
     usize bottom = (usize)malloc(KERNEL_STACK_SIZE);
     return bottom;
 }
@@ -26,6 +27,7 @@ switchThread(Thread *self, Thread *target)
 usize
 pushContextToStack(ThreadContext self, usize stackTop)
 {
+    // 将线程上下文压入栈底
     ThreadContext *ptr = (ThreadContext *)(stackTop - sizeof(ThreadContext));
     *ptr = self;
     return (usize)ptr;
@@ -38,7 +40,9 @@ newKernelThreadContext(usize entry, usize kernelStackTop, usize satp)
     ic.x[2] = kernelStackTop;
     ic.sepc = entry;
     ic.sstatus = r_sstatus();
+    // 设置返回后的特权级为 S-Mode
     ic.sstatus |= SSTATUS_SPP;
+    // 异步中断使能
     ic.sstatus |= SSTATUS_SPIE;
     ic.sstatus &= ~SSTATUS_SIE;
     ThreadContext tc;
@@ -49,9 +53,9 @@ newKernelThreadContext(usize entry, usize kernelStackTop, usize satp)
 }
 
 void
-appendArguments(Thread *thread, usize args[8])
+appendArguments(Thread thread, usize args[8])
 {
-    ThreadContext *ptr = (ThreadContext *)thread->contextAddr;
+    ThreadContext *ptr = (ThreadContext *)thread.contextAddr;
     ptr->ic.x[10] = args[0];
     ptr->ic.x[11] = args[1];
     ptr->ic.x[12] = args[2];
@@ -78,13 +82,16 @@ newKernelThread(usize entry)
 }
 
 void
-tempThreadFunc(Thread *from, Thread *current, usize c)
+helloThread(usize arg)
 {
-    printf("The char passed by is ");
-    consolePutchar(c);
-    consolePutchar('\n');
-    printf("Hello world from tempThread!\n");
-    switchThread(current, from);
+    printf("Begin of thread %d\n", arg);
+    int i;
+    for(i = 0; i < 800; i ++) {
+        printf("%d", arg);
+    }
+    printf("\nEnd of thread %d\n", arg);
+    exitFromCPU(0);
+    while(1) {}
 }
 
 Thread
@@ -99,13 +106,24 @@ newBootThread()
 void
 initThread()
 {
-    Thread bootThread = newBootThread();
-    Thread tempThread = newKernelThread((usize)tempThreadFunc);
-    usize args[8];
-    args[0] = (usize)&bootThread;
-    args[1] = (usize)&tempThread;
-    args[2] = (long)'M';
-    appendArguments(&tempThread, args);
-    switchThread(&bootThread, &tempThread);
-    printf("I'm back from tempThread!\n");
+    Scheduler s = {
+        schedulerInit,
+        schedulerPush,
+        schedulerPop,
+        schedulerTick,
+        schedulerExit
+    };
+    s.init();
+    ThreadPool pool = newThreadPool(s);
+    Thread idle = newKernelThread((usize)idleMain);
+    initCPU(idle, pool);
+    usize i;
+    for(i = 0; i < 5; i ++) {
+        Thread t = newKernelThread((usize)helloThread);
+        usize args[8];
+        args[0] = i;
+        appendArguments(t, args);
+        addToCPU(t);
+    }
+    printf("***** init thread *****\n");
 }
