@@ -91,13 +91,14 @@ Thread
 newKernelThread(usize entry)
 {
     usize stackBottom = newKernelStack();
+    Process p = {r_satp()};
     usize contextAddr = newKernelThreadContext(
         entry,
         stackBottom + KERNEL_STACK_SIZE,
-        r_satp()
+        p.satp
     );
     Thread t = {
-        contextAddr, stackBottom
+        contextAddr, stackBottom, p
     };
     return t;
 }
@@ -113,13 +114,14 @@ newUserThread(char *data)
 
     usize kstack = newKernelStack();
     usize entryAddr = ((ElfHeader *)data)->entry;
+    Process p = {m.rootPpn | (8L << 60)};
     usize context = newUserThreadContext(
         entryAddr,
         ustackTop,
         kstack + KERNEL_STACK_SIZE,
-        m.rootPpn | (8L << 60)
+        p.satp
     );
-    Thread t = {context, kstack};
+    Thread t = {context, kstack, p};
     return t;
 }
 

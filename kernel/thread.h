@@ -5,11 +5,20 @@
 #include "context.h"
 #include "consts.h"
 
+// 进程为资源分配的单位
+// 保存线程共享资源
+typedef struct {
+    // 页表寄存器
+    usize satp;
+} Process;
+
 typedef struct {
     // 线程上下文存储的地址
     usize contextAddr;
     // 线程栈底地址
     usize kstack;
+    // 所属进程
+    Process process;
 } Thread;
 
 typedef enum {
