@@ -14,11 +14,14 @@ void printf(char *, ...);
 void panic(char*) __attribute__((noreturn));
 
 /*  heap.c  */
-void *malloc(uint32 size);
-void free(void *ptr);
+void *kalloc(uint32 size);
+void kfree(void *ptr);
 
 /*  memory.c    */
 usize allocFrame();
 void deallocFrame(usize ppn);
+
+/*  processor.c    */
+void exitFromCPU(usize code);
 
 #endif

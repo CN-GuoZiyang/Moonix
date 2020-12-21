@@ -2,6 +2,7 @@
 #include "def.h"
 
 asm(".include \"kernel/entry.asm\"");
+asm(".include \"kernel/linkUser.asm\"");
 
 void
 main()

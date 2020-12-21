@@ -59,7 +59,7 @@ retrieveToPool(ThreadPool *pool, RunningThread rt)
     int tid = rt.tid;
     if(!pool->threads[tid].occupied) {
         // 表明刚刚这个线程退出了，回收栈空间
-        free((void *)pool->threads[tid].thread.kstack);
+        kfree((void *)pool->threads[tid].thread.kstack);
         return;
     }
     ThreadInfo *ti = &pool->threads[tid];

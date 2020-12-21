@@ -39,4 +39,9 @@ extern void kernel_end();
 // 线程池最大线程数
 #define MAX_THREAD          0x40
 
+// 用户栈大小
+#define USER_STACK_SIZE     0x80000
+// 用户栈起始地址
+#define USER_STACK_OFFSET   0xffffffff00000000
+
 #endif

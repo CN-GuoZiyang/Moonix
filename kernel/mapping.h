@@ -43,4 +43,9 @@ typedef struct
 // 访问通过内核线性映射的虚拟地址
 usize accessVaViaPa(usize pa);
 
+Mapping newKernelMapping();
+void mapLinearSegment(Mapping self, Segment segment);
+void mapFramedSegment(Mapping m, Segment segment);
+void mapFramedAndCopy(Mapping m, Segment segment, char *data, usize length);
+
 #endif

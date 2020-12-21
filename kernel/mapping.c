@@ -46,20 +46,73 @@ PageTableEntry
 
 // 线性映射一个段，填充页表
 void
-mapLinarSegment(Mapping self, Segment segment)
+mapLinearSegment(Mapping self, Segment segment)
 {
-    usize startVpn = segment.startVaddr >> 12;
-    usize endVpn = segment.endVaddr >> 12;
-    if((segment.endVaddr & 0x0111L) == 0) {
-        endVpn --;
-    }
+    usize startVpn = segment.startVaddr / PAGE_SIZE;
+    usize endVpn = (segment.endVaddr - 1) / PAGE_SIZE + 1;
     usize vpn;
-    for(vpn = startVpn; vpn <= endVpn; vpn ++) {
+    for(vpn = startVpn; vpn < endVpn; vpn ++) {
         PageTableEntry *entry = findEntry(self, vpn);
         if(*entry != 0) {
             panic("Virtual address already mapped!\n");
         }
         *entry = ((vpn - KERNEL_PAGE_OFFSET) << 10) | segment.flags | VALID;
+    }
+}
+
+// 映射一个未被分配物理内存的段
+void
+mapFramedSegment(Mapping m, Segment segment)
+{
+    usize startVpn = segment.startVaddr / PAGE_SIZE;
+    usize endVpn = (segment.endVaddr - 1) / PAGE_SIZE + 1;
+    usize vpn;
+    for(vpn = startVpn; vpn < endVpn; vpn ++) {
+        PageTableEntry *entry = findEntry(m, vpn);
+        if(*entry != 0) {
+            panic("Virtual address already mapped!\n");
+        }
+        *entry = (allocFrame() >> 2) | segment.flags | VALID;
+    }
+}
+
+// 映射一个未被分配物理内存的段
+// 并复制数据到新分配的内存
+void
+mapFramedAndCopy(Mapping m, Segment segment, char *data, usize length)
+{
+    usize s = (usize)data, l = length;
+    usize startVpn = segment.startVaddr / PAGE_SIZE;
+    usize endVpn = (segment.endVaddr - 1) / PAGE_SIZE + 1;
+    usize vpn;
+    for(vpn = startVpn; vpn < endVpn; vpn ++) {
+        PageTableEntry *entry = findEntry(m, vpn);
+        if(*entry != 0) {
+            panic("Virtual address already mapped!\n");
+        }
+        usize pAddr = allocFrame();
+        *entry = (pAddr >> 2) | segment.flags | VALID;
+        // 复制数据到目标位置
+        char *dst = (char *)accessVaViaPa(pAddr);
+        if(l >= PAGE_SIZE) {
+            char *src = (char *)s;
+            int i;
+            for(i = 0; i < PAGE_SIZE; i ++) {
+                dst[i] = src[i];
+            }
+        } else {
+            char *src = (char *)s;
+            int i;
+            for(i = 0; i < l; i ++) {
+                dst[i] = src[i];
+            }
+            for(i = l; i < PAGE_SIZE; i ++) {
+                dst[i] = 0;
+            }
+        }
+        s += PAGE_SIZE;
+        if(l >= PAGE_SIZE) l -= PAGE_SIZE;
+        else l = 0;
     }
 }
 
@@ -84,7 +137,7 @@ newKernelMapping()
         (usize)rodata_start,
         1L | READABLE | EXECUTABLE
     };
-    mapLinarSegment(m, text);
+    mapLinearSegment(m, text);
 
     // .rodata 段，r--
     Segment rodata = {
@@ -92,7 +145,7 @@ newKernelMapping()
         (usize)data_start,
         1L | READABLE
     };
-    mapLinarSegment(m, rodata);
+    mapLinearSegment(m, rodata);
 
     // .data 段，rw-
     Segment data = {
@@ -100,7 +153,7 @@ newKernelMapping()
         (usize)bss_start,
         1L | READABLE | WRITABLE
     };
-    mapLinarSegment(m, data);
+    mapLinearSegment(m, data);
 
     // .bss 段，rw-
     Segment bss = {
@@ -108,7 +161,7 @@ newKernelMapping()
         (usize)kernel_end,
         1L | READABLE | WRITABLE
     };
-    mapLinarSegment(m, bss);
+    mapLinearSegment(m, bss);
 
     // 剩余空间，rw-
     Segment other = {
@@ -116,7 +169,7 @@ newKernelMapping()
         (usize)(MEMORY_END_PADDR + KERNEL_MAP_OFFSET),
         1L | READABLE | WRITABLE
     };
-    mapLinarSegment(m, other);
+    mapLinearSegment(m, other);
 
     return m;
 }

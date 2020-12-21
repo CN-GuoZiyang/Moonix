@@ -22,10 +22,11 @@ initFrameAllocator(usize startPpn, usize endPpn)
 usize
 allocFrame()
 {
-    char *start = (char *)(alloc() << 12);
+    usize start = alloc() << 12;
     int i;
+    char *vStart = (char *)(start + KERNEL_MAP_OFFSET);
     for(i = 0; i < PAGE_SIZE; i ++) {
-        start[i] = 0;
+        vStart[i] = 0;
     }
     return (usize)start;
 }

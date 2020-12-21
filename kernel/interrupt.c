@@ -24,6 +24,20 @@ breakpoint(InterruptContext *context)
     context->sepc += 2;
 }
 
+// 处理来自 U-Mode 的系统调用
+void
+handleSyscall(InterruptContext *context)
+{
+    context->sepc += 4;
+    extern usize syscall(usize id, usize args[3], InterruptContext *context);
+    usize ret = syscall(
+        context->x[17],
+        (usize[]){context->x[10], context->x[11], context->x[12]},
+        context
+    );
+    context->x[10] = ret;
+}
+
 // 时钟中断，主要用于调度
 void
 supervisorTimer()
@@ -51,6 +65,9 @@ handleInterrupt(InterruptContext *context, usize scause, usize stval)
     {
     case BREAKPOINT:
         breakpoint(context);
+        break;
+    case USER_ENV_CALL:
+        handleSyscall(context);
         break;
     case SUPERVISOR_TIMER:
         supervisorTimer();

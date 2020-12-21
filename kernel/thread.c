@@ -3,12 +3,14 @@
 #include "consts.h"
 #include "thread.h"
 #include "riscv.h"
+#include "elf.h"
+#include "mapping.h"
 
 usize
 newKernelStack()
 {
     // 将内核线程的线程栈分配在堆空间
-    usize bottom = (usize)malloc(KERNEL_STACK_SIZE);
+    usize bottom = (usize)kalloc(KERNEL_STACK_SIZE);
     return bottom;
 }
 
@@ -52,6 +54,25 @@ newKernelThreadContext(usize entry, usize kernelStackTop, usize satp)
     return pushContextToStack(tc, kernelStackTop);
 }
 
+usize
+newUserThreadContext(usize entry, usize ustackTop, usize kstackTop, usize satp)
+{
+    InterruptContext ic;
+    ic.x[2] = ustackTop;
+    ic.sepc = entry;
+    ic.sstatus = r_sstatus();
+    // 设置返回后的特权级为 U-Mode
+    ic.sstatus &= ~SSTATUS_SPP;
+    // 异步中断使能
+    ic.sstatus |= SSTATUS_SPIE;
+    ic.sstatus &= ~SSTATUS_SIE;
+    ThreadContext tc;
+    extern void __restore(); tc.ra = (usize)__restore;
+    tc.satp = satp;
+    tc.ic = ic;
+    return pushContextToStack(tc, kstackTop);
+}
+
 void
 appendArguments(Thread thread, usize args[8])
 {
@@ -78,6 +99,27 @@ newKernelThread(usize entry)
     Thread t = {
         contextAddr, stackBottom
     };
+    return t;
+}
+
+Thread
+newUserThread(char *data)
+{
+    Mapping m = newUserMapping(data);
+    usize ustackBottom = USER_STACK_OFFSET, ustackTop = USER_STACK_OFFSET + USER_STACK_SIZE;
+    // 将用户栈映射
+    Segment s = {ustackBottom, ustackTop, 1L | USER | READABLE | WRITABLE};
+    mapFramedSegment(m, s);
+
+    usize kstack = newKernelStack();
+    usize entryAddr = ((ElfHeader *)data)->entry;
+    usize context = newUserThreadContext(
+        entryAddr,
+        ustackTop,
+        kstack + KERNEL_STACK_SIZE,
+        m.rootPpn | (8L << 60)
+    );
+    Thread t = {context, kstack};
     return t;
 }
 
@@ -125,5 +167,9 @@ initThread()
         appendArguments(t, args);
         addToCPU(t);
     }
+    // 创建一个用户线程并添加到 CPU
+    extern void _user_img_start();
+    Thread t = newUserThread((char *)_user_img_start);
+    addToCPU(t);
     printf("***** init thread *****\n");
 }

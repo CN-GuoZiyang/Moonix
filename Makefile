@@ -1,4 +1,5 @@
 K=kernel
+U=user
 
 OBJS = 						\
 	$K/sbi.o				\
@@ -12,7 +13,15 @@ OBJS = 						\
 	$K/threadpool.o			\
 	$K/processor.o			\
 	$K/rrscheduler.o		\
+	$K/syscall.o			\
+	$K/elf.o				\
 	$K/main.o
+
+UPROS =						\
+	$U/entry.o				\
+	$U/malloc.o				\
+	$U/io.o					\
+	$U/hello.o
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-
@@ -44,16 +53,23 @@ all: Image
 
 Image: Kernel
 
-Kernel: $(subst .c,.o,$(wildcard $K/*.c))
+Kernel: User $(subst .c,.o,$(wildcard $K/*.c))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
+
+User: $(subst .c,.o,$(wildcard $U/*.c))
+	$(LD) $(LDFLAGS) -o $U/User $(UPROS)
+	cp $U/User User
 
 # compile all .c file to .o file
 $K/%.o: $K/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$U/%.o: $U/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -f */*.d */*.o $K/Kernel Image Image.asm
+	rm -f */*.d */*.o $K/Kernel $U/User Image User Image.asm
 	
 asm: Kernel
 	$(OBJDUMP) -S $K/Kernel > Image.asm

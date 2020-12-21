@@ -1,6 +1,11 @@
 #include "types.h"
-#include "def.h"
-#include "consts.h"
+#include "ulib.h"
+
+// 动态内存分配相关常量
+#define USER_HEAP_SIZE      0x1000          // 堆空间大小
+#define MIN_BLOCK_SIZE      0x20            // 最小分配的内存块大小
+#define HEAP_BLOCK_NUM      0x80            // 管理的总块数
+#define BUDDY_NODE_NUM      0xff            // 二叉树节点个数
 
 #define LEFT_LEAF(index) ((index) * 2 + 1)
 #define RIGHT_LEAF(index) ((index) * 2 + 2)
@@ -9,8 +14,8 @@
 #define IS_POWER_OF_2(x) (!((x)&((x)-1)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-// 用于分配的堆空间，8 MBytes
-static uint8 HEAP[KERNEL_HEAP_SIZE];
+// 用于分配的堆空间，4 KBytes
+static uint8 HEAP[USER_HEAP_SIZE];
 
 struct
 {
@@ -112,7 +117,7 @@ buddyAlloc(uint32 size)
 
 // 利用 buddyAlloc 进行分配
 void *
-kalloc(uint32 size)
+malloc(uint32 size)
 {
     if(size == 0) return 0;
     uint32 n;
@@ -173,10 +178,10 @@ buddyFree(uint32 offset)
 }
 
 void
-kfree(void *ptr)
+free(void *ptr)
 {
     if((usize)ptr < (usize)HEAP) return;
-    if((usize)ptr > (usize)HEAP + KERNEL_HEAP_SIZE - MIN_BLOCK_SIZE) return;
+    if((usize)ptr > (usize)HEAP + USER_HEAP_SIZE - MIN_BLOCK_SIZE) return;
     // 相对于堆空间起始地址的偏移
     uint32 offset = (usize)((usize)ptr - (usize)HEAP);
     buddyFree(offset / MIN_BLOCK_SIZE);
