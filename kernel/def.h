@@ -24,4 +24,8 @@ void deallocFrame(usize ppn);
 /*  processor.c    */
 void exitFromCPU(usize code);
 
+/*  string.c    */
+int strlen(char *str);
+int strcmp(char *str1, char *str2);
+
 #endif

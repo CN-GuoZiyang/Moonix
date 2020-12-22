@@ -5,6 +5,7 @@
 #include "riscv.h"
 #include "elf.h"
 #include "mapping.h"
+#include "fs.h"
 
 usize
 newKernelStack()
@@ -169,9 +170,14 @@ initThread()
         appendArguments(t, args);
         addToCPU(t);
     }
-    // 创建一个用户线程并添加到 CPU
-    extern void _user_img_start();
-    Thread t = newUserThread((char *)_user_img_start);
+
+    // 从文件系统中读取 elf 文件
+    Inode *helloInode = lookup(0, "/usr/hello");
+    char *buf = kalloc(helloInode->size);
+    readall(helloInode, buf);
+    Thread t = newUserThread(buf);
+    kfree(buf);
+
     addToCPU(t);
     printf("***** init thread *****\n");
 }

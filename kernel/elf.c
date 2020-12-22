@@ -31,6 +31,7 @@ newUserMapping(char *elf)
     ElfHeader *eHeader = (ElfHeader *)elf;
     // 校验 ELF 头
     if(eHeader->magic != ELF_MAGIC) {
+        printf("Unknown file type: %p\n", eHeader->magic);
         panic("Unknown file type!");
     }
     ProgHeader *pHeader = (ProgHeader *)((usize)elf + eHeader->phoff);
@@ -46,7 +47,7 @@ newUserMapping(char *elf)
         usize vhStart = pHeader->vaddr, vhEnd = vhStart + pHeader->memsz;
         Segment segment = {vhStart, vhEnd, flags};
         char *source = (char *)((usize)elf + pHeader->off);
-        mapFramedAndCopy(m, segment, source, pHeader->memsz);
+        mapFramedAndCopy(m, segment, source, pHeader->filesz);
     }
     return m;
 }

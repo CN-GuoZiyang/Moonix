@@ -1,8 +1,8 @@
-# 将用户程序链接到 .data 段
+# 将文件系统链接到 .data 段
 
 .section .data
-    .global _user_img_start
-    .global _user_img_end
-_user_img_start:
-    .incbin "User"
-_user_img_end:
+    .global _fs_img_start
+    .global _fs_img_end
+_fs_img_start:
+    .incbin "fs.img"
+_fs_img_end:

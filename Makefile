@@ -15,13 +15,18 @@ OBJS = 						\
 	$K/rrscheduler.o		\
 	$K/syscall.o			\
 	$K/elf.o				\
+	$K/string.o				\
+	$K/fs.o					\
 	$K/main.o
 
-UPROS =						\
+UPROSBASE =					\
 	$U/entry.o				\
 	$U/malloc.o				\
-	$U/io.o					\
-	$U/hello.o
+	$U/io.o					
+
+UPROS =						\
+	hello					\
+	hello2
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-
@@ -57,9 +62,15 @@ Kernel: User $(subst .c,.o,$(wildcard $K/*.c))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
 
-User: $(subst .c,.o,$(wildcard $U/*.c))
-	$(LD) $(LDFLAGS) -o $U/User $(UPROS)
-	cp $U/User User
+User: mksfs $(subst .c,.o,$(wildcard $U/*.c))
+	mkdir -p rootfs/usr
+	for file in $(UPROS); do											\
+		$(LD) $(LDFLAGS) -o rootfs/usr/$$file $(UPROSBASE) $U/$$file.o;	\
+	done
+	./mksfs
+
+mksfs:
+	gcc mkfs/mksfs.c -o mksfs
 
 # compile all .c file to .o file
 $K/%.o: $K/%.c
@@ -69,7 +80,8 @@ $U/%.o: $U/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f */*.d */*.o $K/Kernel $U/User Image User Image.asm
+	rm -f */*.d */*.o $K/Kernel $U/User Image User Image.asm mksfs fs.img
+	rm -rf rootfs
 	
 asm: Kernel
 	$(OBJDUMP) -S $K/Kernel > Image.asm

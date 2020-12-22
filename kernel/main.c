@@ -11,6 +11,7 @@ main()
     extern void initInterrupt();    initInterrupt();
     extern void initMemory();       initMemory();
     extern void mapKernel();        mapKernel();
+    extern void initFs();           initFs();
     extern void initThread();       initThread();
     extern void initTimer();        initTimer();
     extern void runCPU();           runCPU();
