@@ -172,7 +172,7 @@ initThread()
     }
 
     // 从文件系统中读取 elf 文件
-    Inode *helloInode = lookup(0, "/usr/hello");
+    Inode *helloInode = lookup(0, "/bin/hello");
     char *buf = kalloc(helloInode->size);
     readall(helloInode, buf);
     Thread t = newUserThread(buf);

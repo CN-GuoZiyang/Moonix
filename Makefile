@@ -63,9 +63,9 @@ Kernel: User $(subst .c,.o,$(wildcard $K/*.c))
 	$(OBJCOPY) $K/Kernel -O binary Image
 
 User: mksfs $(subst .c,.o,$(wildcard $U/*.c))
-	mkdir -p rootfs/usr
+	mkdir -p rootfs/bin
 	for file in $(UPROS); do											\
-		$(LD) $(LDFLAGS) -o rootfs/usr/$$file $(UPROSBASE) $U/$$file.o;	\
+		$(LD) $(LDFLAGS) -o rootfs/bin/$$file $(UPROSBASE) $U/$$file.o;	\
 	done
 	./mksfs
 

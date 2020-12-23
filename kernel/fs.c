@@ -19,7 +19,7 @@ initFs()
 {
     FREEMAP = (char *)getBlockAddr(1);
     SuperBlock* spBlock = (SuperBlock *)_fs_img_start;
-    ROOT_INODE = (Inode *)getBlockAddr(spBlock->freemap_blocks + 1);
+    ROOT_INODE = (Inode *)getBlockAddr(spBlock->freemapBlocks + 1);
 }
 
 Inode *
@@ -29,6 +29,7 @@ lookup(Inode *node, char *filename)
         node = ROOT_INODE;
         filename ++;
     }
+    if(node == 0) node = ROOT_INODE;
     if(*filename == '\0') return node;
     if(node->type != TYPE_DIR) return 0;
     char cTarget[strlen(filename) + 1];

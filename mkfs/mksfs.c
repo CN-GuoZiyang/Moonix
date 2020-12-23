@@ -43,7 +43,7 @@ main()
     SuperBlock spBlock;
     spBlock.magic = MAGIC_NUM;
     spBlock.blocks = BLOCK_NUM;
-    spBlock.freemap_blocks = FREEMAP_NUM;
+    spBlock.freemapBlocks = FREEMAP_NUM;
     char *info = "SimpleFS By Ziyang";
     for(i = 0; i < strlen(info); i ++) {
         spBlock.info[i] = info[i];
@@ -59,7 +59,7 @@ main()
 
     walk(rootdir, &rootInode, FREEMAP_NUM+1);
 
-    spBlock.unused_blocks = freenum;
+    spBlock.unusedBlocks = freenum;
 
     // 将超级块写入 Image
     char *ptr = (char *)getBlockAddr(0), *src = (char *)&spBlock;
@@ -138,7 +138,7 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
             dinode.direct[0] = blockNum;
             dinode.direct[1] = nowInodeNum;
             char *tmp = (char *)malloc(strlen(dirName) + strlen(dirp->d_name) + 1);
-            sprintf(tmp, "%s/%s\0", dirName, dirp->d_name);
+            sprintf(tmp, "%s/%s", dirName, dirp->d_name);
             walk(tmp, &dinode, blockNum);
 
             copyInodeToBlock(blockNum, &dinode);
@@ -152,7 +152,7 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
             }
             finode.filename[i] = '\0';
             char *tmp = (char *)malloc(strlen(dirName) + strlen(dirp->d_name) + 1);
-            sprintf(tmp, "%s/%s\0", dirName, dirp->d_name);
+            sprintf(tmp, "%s/%s", dirName, dirp->d_name);
             // 获取文件信息
             struct stat buf;
             stat(tmp, &buf);

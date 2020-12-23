@@ -2,7 +2,7 @@
 #include "def.h"
 
 asm(".include \"kernel/entry.asm\"");
-asm(".include \"kernel/linkUser.asm\"");
+asm(".include \"kernel/linkFS.asm\"");
 
 void
 main()

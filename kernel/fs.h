@@ -9,8 +9,8 @@
 typedef struct {
     uint32 magic;               // 魔数
     uint32 blocks;              // 总磁盘块数
-    uint32 unused_blocks;       // 未使用的磁盘块数
-    uint32 freemap_blocks;      // freemap 块数
+    uint32 unusedBlocks;        // 未使用的磁盘块数
+    uint32 freemapBlocks;       // freemap 块数
     uint8 info[32];             // 其他信息
 } SuperBlock;
 
