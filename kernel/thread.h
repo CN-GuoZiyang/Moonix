@@ -4,6 +4,7 @@
 #include "types.h"
 #include "context.h"
 #include "consts.h"
+#include "condition.h"
 
 // 进程为资源分配的单位
 // 保存线程共享资源
@@ -19,6 +20,8 @@ typedef struct {
     usize kstack;
     // 所属进程
     Process process;
+    // 等待其退出的 Tid
+    int wait;
 } Thread;
 
 typedef enum {
@@ -65,6 +68,7 @@ typedef struct {
 
 // 线程相关函数
 void switchThread(Thread *self, Thread *target);
+Thread newUserThread(char *data);
 
 // 线程池相关函数
 ThreadPool newThreadPool(Scheduler scheduler);
@@ -84,6 +88,7 @@ void exitFromCPU(usize code);
 void runCPU();
 void yieldCPU();
 void wakeupCPU(int tid);
+int executeCPU(char *path, int hostTid);
 int getCurrentTid();
 
 // 调度器相关函数

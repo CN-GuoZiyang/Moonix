@@ -11,4 +11,7 @@ void putchar(int c);
 void *malloc(uint32 size);
 void free(void *ptr);
 
+/*  string.c    */
+int strcmp(char *str1, char *str2);
+
 #endif

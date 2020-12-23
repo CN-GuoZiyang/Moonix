@@ -2,6 +2,8 @@
 #include "def.h"
 #include "thread.h"
 #include "riscv.h"
+#include "condition.h"
+#include "fs.h"
 
 // 全局唯一的 Processor 实例
 static Processor CPU;
@@ -67,7 +69,11 @@ exitFromCPU(usize code)
     disable_and_store();
     int tid = CPU.current.tid;
     exitFromPool(&CPU.pool, tid);
-    printf("Thread %d exited, exit code = %d\n", tid, code);
+    
+    if(CPU.current.thread.wait != -1) {
+        wakeupCPU(CPU.current.thread.wait);
+    }
+
     switchThread(&CPU.current.thread, &CPU.idle);
 }
 
@@ -99,6 +105,25 @@ void
 wakeupCPU(int tid)
 {
     wakeupFromPool(&CPU.pool, tid);
+}
+
+// 执行一个用户进程
+// hostTid 为需要暂停的线程的 tid
+int
+executeCPU(char *path, int hostTid)
+{
+    Inode *res = lookup(0, path);
+    if(res == 0) {
+        printf("Command not found!\n");
+        return 0;
+    }
+    char *buf = kalloc(res->size);
+    readall(res, buf);
+    Thread t = newUserThread(buf);
+    t.wait = hostTid;
+    kfree(buf);
+    addToCPU(t);
+    return 1;
 }
 
 int

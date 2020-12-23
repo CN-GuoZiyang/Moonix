@@ -7,7 +7,7 @@ asm(".include \"kernel/linkFS.asm\"");
 void
 main()
 {
-    printf("Welcome to Moonix!\n");
+    printf("Initializing Moonix...\n");
     extern void initMemory();       initMemory();
     extern void initInterrupt();    initInterrupt();
     extern void initFs();           initFs();

@@ -99,7 +99,7 @@ newKernelThread(usize entry)
         p.satp
     );
     Thread t = {
-        contextAddr, stackBottom, p
+        contextAddr, stackBottom, p, -1
     };
     return t;
 }
@@ -122,7 +122,7 @@ newUserThread(char *data)
         kstack + KERNEL_STACK_SIZE,
         p.satp
     );
-    Thread t = {context, kstack, p};
+    Thread t = {context, kstack, p, -1};
     return t;
 }
 
@@ -142,9 +142,10 @@ helloThread(usize arg)
 Thread
 newBootThread()
 {
-    Thread t = {
-        0L, 0L
-    };
+    Thread t;
+    t.contextAddr = 0L;
+    t.kstack = 0L;
+    t.wait = -1;
     return t;
 }
 
@@ -164,9 +165,9 @@ initThread()
     initCPU(idle, pool);
 
     // 从文件系统中读取 elf 文件
-    Inode *helloInode = lookup(0, "/bin/echo");
-    char *buf = kalloc(helloInode->size);
-    readall(helloInode, buf);
+    Inode *shInode = lookup(0, "/bin/sh");
+    char *buf = kalloc(shInode->size);
+    readall(shInode, buf);
     Thread t = newUserThread(buf);
     kfree(buf);
 

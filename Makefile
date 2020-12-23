@@ -25,11 +25,13 @@ OBJS = 						\
 UPROSBASE =					\
 	$U/entry.o				\
 	$U/malloc.o				\
-	$U/io.o					
+	$U/io.o					\
+	$U/string.o				\
 
 UPROS =						\
 	hello					\
-	echo
+	fib50					\
+	sh
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-

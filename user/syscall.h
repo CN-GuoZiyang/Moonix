@@ -2,9 +2,11 @@
 #define _SYSCALL_H
 
 typedef enum {
+    Shutdown = 13,
     Read = 63,
     Write = 64,
     Exit = 93,
+    Exec = 221,
 } SyscallId;
 
 #define sys_call(__num, __a0, __a1, __a2, __a3)                          \
@@ -21,8 +23,10 @@ typedef enum {
     a0;                                                             \
 })
 
+#define sys_shut() sys_call(Shutdown, 0, 0, 0, 0)
 #define sys_read(__a0, __a1, __a2) sys_call(Read, __a0, __a1, __a2, 0)
 #define sys_write(__a0) sys_call(Write, __a0, 0, 0, 0)
 #define sys_exit(__a0) sys_call(Exit, __a0, 0, 0, 0)
+#define sys_exec(__a0) sys_call(Exec, __a0, 0, 0, 0)
 
 #endif

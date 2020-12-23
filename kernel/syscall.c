@@ -2,10 +2,13 @@
 #include "def.h"
 #include "context.h"
 #include "stdin.h"
+#include "thread.h"
 
+const usize SYS_SHUTDOWN = 13;
 const usize SYS_READ     = 63;
 const usize SYS_WRITE    = 64;
 const usize SYS_EXIT     = 93;
+const usize SYS_EXEC     = 221;
 
 usize
 sysRead(usize fd, uint8 *base, usize len) {
@@ -14,10 +17,22 @@ sysRead(usize fd, uint8 *base, usize len) {
 }
 
 usize
+sysExec(char *path)
+{
+    if(executeCPU(path, getCurrentTid())) {
+        yieldCPU();
+    }
+    return 0;
+}
+
+usize
 syscall(usize id, usize args[3], InterruptContext *context)
 {
     switch (id)
     {
+    case SYS_SHUTDOWN:
+        shutdown();
+        return 0;
     case SYS_READ:
         return sysRead(args[0], (uint8 *)args[1], args[2]);
     case SYS_WRITE:
@@ -25,6 +40,9 @@ syscall(usize id, usize args[3], InterruptContext *context)
         return 0;
     case SYS_EXIT:
         exitFromCPU(args[0]);
+        return 0;
+    case SYS_EXEC:
+        sysExec((char *)args[0]);
         return 0;
     default:
         printf("Unknown syscall id %d\n", id);
