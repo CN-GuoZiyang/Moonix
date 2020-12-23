@@ -2,6 +2,7 @@
 #include "def.h"
 #include "memory.h"
 #include "consts.h"
+#include "riscv.h"
 
 // 全局页帧分配器
 FrameAllocator frameAllocator;
@@ -42,11 +43,14 @@ deallocFrame(usize startAddr)
 void
 initMemory()
 {
+    // 打开 sstatus 的 SUM 位，允许内核访问用户内存
+    w_sstatus(r_sstatus() | SSTATUS_SUM);
     initFrameAllocator(
         (((usize)(kernel_end) - KERNEL_MAP_OFFSET) >> 12) + 1,
         MEMORY_END_PADDR >> 12
     );
     extern void initHeap(); initHeap();
+    extern void mapKernel(); mapKernel();
     printf("***** Init Memory *****\n");
 }
 

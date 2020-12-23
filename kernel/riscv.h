@@ -31,6 +31,7 @@ w_sie(usize x)
     asm volatile("csrw sie, %0" : : "r" (x));
 }
 
+#define SSTATUS_SUM (1L << 18)
 #define SSTATUS_SPP (1L << 8)
 #define SSTATUS_SPIE (1L << 5)
 #define SSTATUS_SIE (1L << 1)  // 监管者模式中断使能

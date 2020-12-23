@@ -5,8 +5,14 @@
 
 static char digits[] = "0123456789abcdef";
 
-void
-putchar(int c)
+uint8 getc()
+{
+    uint8 c;
+    sys_read(0, &c, 1);
+    return c;
+}
+
+void putchar(int c)
 {
     sys_write(c);
 }
@@ -14,55 +20,58 @@ putchar(int c)
 static void
 printint(int xx, int base, int sign)
 {
-  char buf[16];
-  int i;
-  uint x;
+    char buf[16];
+    int i;
+    uint x;
 
-  if(sign && (sign = xx < 0))
-    x = -xx;
-  else
-    x = xx;
+    if (sign && (sign = xx < 0))
+        x = -xx;
+    else
+        x = xx;
 
-  i = 0;
-  do {
-    buf[i++] = digits[x % base];
-  } while((x /= base) != 0);
+    i = 0;
+    do
+    {
+        buf[i++] = digits[x % base];
+    } while ((x /= base) != 0);
 
-  if(sign)
-    buf[i++] = '-';
+    if (sign)
+        buf[i++] = '-';
 
-  while(--i >= 0)
-    putchar(buf[i]);
+    while (--i >= 0)
+        putchar(buf[i]);
 }
 
 static void
 printptr(uint64 x)
 {
-  int i;
-  putchar('0');
-  putchar('x');
-  for (i = 0; i < (sizeof(uint64) * 2); i++, x <<= 4)
-    putchar(digits[x >> (sizeof(uint64) * 8 - 4)]);
+    int i;
+    putchar('0');
+    putchar('x');
+    for (i = 0; i < (sizeof(uint64) * 2); i++, x <<= 4)
+        putchar(digits[x >> (sizeof(uint64) * 8 - 4)]);
 }
 
-void
-printf(char *fmt, ...)
+void printf(char *fmt, ...)
 {
     va_list ap;
     int i, c;
     char *s;
 
-    if(fmt == 0)
+    if (fmt == 0)
         panic("null fmt");
 
     va_start(ap, fmt);
-    for(i = 0; (c = fmt[i] & 0xff) != 0; i ++) {
-        if(c != '%') {
+    for (i = 0; (c = fmt[i] & 0xff) != 0; i++)
+    {
+        if (c != '%')
+        {
             putchar(c);
             continue;
         }
         c = fmt[++i] & 0xff;
-        if(c == 0) break;
+        if (c == 0)
+            break;
         switch (c)
         {
         case 'd':
@@ -75,9 +84,9 @@ printf(char *fmt, ...)
             printptr(va_arg(ap, uint64));
             break;
         case 's':
-            if((s = va_arg(ap, char*)) == 0)
+            if ((s = va_arg(ap, char *)) == 0)
                 s = "(null)";
-            for(; *s; s++)
+            for (; *s; s++)
                 putchar(*s);
             break;
         case '%':
@@ -91,11 +100,10 @@ printf(char *fmt, ...)
     }
 }
 
-void
-panic(char *s)
+void panic(char *s)
 {
-  printf("panic: ");
-  printf(s);
-  printf("\n");
-  sys_exit(1);
+    printf("panic: ");
+    printf(s);
+    printf("\n");
+    sys_exit(1);
 }

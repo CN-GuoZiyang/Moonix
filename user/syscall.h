@@ -2,6 +2,7 @@
 #define _SYSCALL_H
 
 typedef enum {
+    Read = 63,
     Write = 64,
     Exit = 93,
 } SyscallId;
@@ -20,6 +21,7 @@ typedef enum {
     a0;                                                             \
 })
 
+#define sys_read(__a0, __a1, __a2) sys_call(Read, __a0, __a1, __a2, 0)
 #define sys_write(__a0) sys_call(Write, __a0, 0, 0, 0)
 #define sys_exit(__a0) sys_call(Exit, __a0, 0, 0, 0)
 

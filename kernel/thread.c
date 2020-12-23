@@ -162,17 +162,9 @@ initThread()
     ThreadPool pool = newThreadPool(s);
     Thread idle = newKernelThread((usize)idleMain);
     initCPU(idle, pool);
-    usize i;
-    for(i = 0; i < 5; i ++) {
-        Thread t = newKernelThread((usize)helloThread);
-        usize args[8];
-        args[0] = i;
-        appendArguments(t, args);
-        addToCPU(t);
-    }
 
     // 从文件系统中读取 elf 文件
-    Inode *helloInode = lookup(0, "/bin/hello");
+    Inode *helloInode = lookup(0, "/bin/echo");
     char *buf = kalloc(helloInode->size);
     readall(helloInode, buf);
     Thread t = newUserThread(buf);

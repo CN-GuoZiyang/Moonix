@@ -85,3 +85,12 @@ exitFromPool(ThreadPool *pool, int tid)
     pool->threads[tid].occupied = 0;
     pool->scheduler.exit(tid);
 }
+
+// 从线程池中唤醒一个线程，并通知调度器
+void
+wakeupFromPool(ThreadPool *pool, int tid)
+{
+    ThreadInfo *ti = &pool->threads[tid];
+    ti->status = Ready;
+    schedulerPush(tid);
+}

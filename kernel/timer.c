@@ -3,7 +3,6 @@
 #include "riscv.h"
 
 static const usize INTERVAL = 100000;
-static usize TICKS = 0;
 
 void setTimeout();
 
@@ -29,8 +28,4 @@ void
 tick()
 {
     setTimeout();
-    TICKS += 1;
-    if(TICKS % 100 == 0) {
-        printf("** %d ticks **\n", TICKS);
-    }
 }

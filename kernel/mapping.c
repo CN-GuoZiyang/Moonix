@@ -174,13 +174,46 @@ newKernelMapping()
     return m;
 }
 
+// 映射外部中断相关区域
+void
+mapExtInterruptArea(Mapping m)
+{
+    Segment s1 = {
+        (usize)0x0C000000 + KERNEL_MAP_OFFSET,
+        (usize)0x0C001000 + KERNEL_MAP_OFFSET,
+        1L | READABLE | WRITABLE
+    };
+    mapLinearSegment(m, s1);
+
+    Segment s2 = {
+        (usize)0x0C002000 + KERNEL_MAP_OFFSET,
+        (usize)0x0C003000 + KERNEL_MAP_OFFSET,
+        1L | READABLE | WRITABLE
+    };
+    mapLinearSegment(m, s2);
+
+    Segment s3 = {
+        (usize)0x0C201000 + KERNEL_MAP_OFFSET,
+        (usize)0x0C202000 + KERNEL_MAP_OFFSET,
+        1L | READABLE | WRITABLE
+    };
+    mapLinearSegment(m, s3);
+
+    Segment s4 = {
+        (usize)0x10000000 + KERNEL_MAP_OFFSET,
+        (usize)0x10001000 + KERNEL_MAP_OFFSET,
+        1L | READABLE | WRITABLE
+    };
+    mapLinearSegment(m, s4);
+}
+
 // 映射内核
 void
 mapKernel()
 {
     Mapping m = newKernelMapping();
+    mapExtInterruptArea(m);
     activateMapping(m);
-    printf("***** Remap Kernel *****\n");
 }
 
 // 获得线性映射后的虚拟地址

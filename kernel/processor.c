@@ -31,11 +31,9 @@ idleMain()
             // 有线程可以运行
             CPU.current = rt;
             CPU.occupied = 1;
-            printf("\n>>>> will switch_to thread %d in idle_main!\n", CPU.current.tid);
             switchThread(&CPU.idle, &CPU.current.thread);
 
             // 切换回 idle 线程处
-            printf("<<<< switch_back to idle in idle_main!\n");
             CPU.occupied = 0;
             retrieveToPool(&CPU.pool, CPU.current);
         } else {
@@ -79,4 +77,32 @@ runCPU()
     // 从启动线程切换进 idle，boot 线程信息丢失，不会再回来
     Thread boot = {0L, 0L};
     switchThread(&boot, &CPU.idle);
+}
+
+// 当前线程主动放弃 CPU，并进入休眠状态
+void
+yieldCPU()
+{
+    if(CPU.occupied) {
+        usize flags = disable_and_store();
+        int tid = CPU.current.tid;
+        ThreadInfo *ti = &CPU.pool.threads[tid];
+        ti->status = Sleeping;
+        switchThread(&CPU.current.thread, &CPU.idle);
+
+        restore_sstatus(flags);
+    }
+}
+
+// 将某个线程唤醒
+void
+wakeupCPU(int tid)
+{
+    wakeupFromPool(&CPU.pool, tid);
+}
+
+int
+getCurrentTid()
+{
+    return CPU.current.tid;
 }

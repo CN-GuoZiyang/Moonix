@@ -8,9 +8,8 @@ void
 main()
 {
     printf("Welcome to Moonix!\n");
-    extern void initInterrupt();    initInterrupt();
     extern void initMemory();       initMemory();
-    extern void mapKernel();        mapKernel();
+    extern void initInterrupt();    initInterrupt();
     extern void initFs();           initFs();
     extern void initThread();       initThread();
     extern void initTimer();        initTimer();

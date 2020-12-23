@@ -73,6 +73,7 @@ RunningThread acquireFromPool(ThreadPool *pool);
 void retrieveToPool(ThreadPool *pool, RunningThread rt);
 int tickPool(ThreadPool *pool);
 void exitFromPool(ThreadPool *pool, int tid);
+void wakeupFromPool(ThreadPool *pool, int tid);
 
 // Processor 相关函数
 void initCPU(Thread idle, ThreadPool pool);
@@ -81,6 +82,9 @@ void idleMain();
 void tickCPU();
 void exitFromCPU(usize code);
 void runCPU();
+void yieldCPU();
+void wakeupCPU(int tid);
+int getCurrentTid();
 
 // 调度器相关函数
 void schedulerInit();

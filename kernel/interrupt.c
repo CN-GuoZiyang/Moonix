@@ -3,8 +3,25 @@
 #include "def.h"
 #include "riscv.h"
 #include "interrupt.h"
+#include "consts.h"
+#include "stdin.h"
 
 asm(".include \"kernel/interrupt.asm\"");
+
+void
+initExternalInterrupt()
+{
+    *(uint32 *)(0x0C002080 + KERNEL_MAP_OFFSET) = 1 << 0xa;
+    *(uint32 *)(0x0C000028 + KERNEL_MAP_OFFSET) = 0x7U;
+    *(uint32 *)(0x0C201000 + KERNEL_MAP_OFFSET) = 0x0U;
+}
+
+void
+initSerialInterrupt()
+{
+    *(uint8 *)(0x10000004 + KERNEL_MAP_OFFSET) = 0x0bU;
+    *(uint8 *)(0x10000001 + KERNEL_MAP_OFFSET) = 0x01U;
+}
 
 void
 initInterrupt()
@@ -12,7 +29,31 @@ initInterrupt()
     // 设置 stvec 寄存器，设置中断处理函数和处理模式
     extern void __interrupt();
     w_stvec((usize)__interrupt | MODE_DIRECT);
+
+    // 开启外部中断
+    w_sie(r_sie() | SIE_SEIE);
+
+    // 打开 OpenSBI 的外部中断响应
+    initExternalInterrupt();
+    initSerialInterrupt();
+
     printf("***** Init Interrupt *****\n");
+}
+
+// 处理外部中断
+void
+external()
+{
+    // 目前只处理串口中断
+    usize ret = consoleGetchar();
+    if(ret != -1) {
+        char ch = (char)ret;
+        if(ch == '\r') {
+            pushChar('\n');
+        } else {
+            pushChar(ch);
+        }
+    }
 }
 
 // 断点中断，打印信息并跳转到下一条指令
@@ -71,6 +112,9 @@ handleInterrupt(InterruptContext *context, usize scause, usize stval)
         break;
     case SUPERVISOR_TIMER:
         supervisorTimer();
+        break;
+    case SUPERVISOR_EXTERNAL:
+        external();
         break;
     default:
         fault(context, scause, stval);

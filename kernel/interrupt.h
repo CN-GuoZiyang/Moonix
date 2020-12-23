@@ -4,5 +4,6 @@
 #define BREAKPOINT          3L
 #define USER_ENV_CALL       8L
 #define SUPERVISOR_TIMER    5L | (1L << 63)
+#define SUPERVISOR_EXTERNAL 9L | (1L << 63)
 
 #endif

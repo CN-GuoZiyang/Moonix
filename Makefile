@@ -17,6 +17,9 @@ OBJS = 						\
 	$K/elf.o				\
 	$K/string.o				\
 	$K/fs.o					\
+	$K/queue.o				\
+	$K/condition.o			\
+	$K/stdin.o				\
 	$K/main.o
 
 UPROSBASE =					\
@@ -26,7 +29,7 @@ UPROSBASE =					\
 
 UPROS =						\
 	hello					\
-	hello2
+	echo
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-
