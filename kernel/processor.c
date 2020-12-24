@@ -104,7 +104,9 @@ yieldCPU()
 void
 wakeupCPU(int tid)
 {
-    wakeupFromPool(&CPU.pool, tid);
+    ThreadInfo *ti = &CPU.pool.threads[tid];
+    ti->status = Ready;
+    schedulerPush(tid);
 }
 
 // 执行一个用户进程

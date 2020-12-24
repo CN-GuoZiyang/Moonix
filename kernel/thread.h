@@ -77,7 +77,6 @@ RunningThread acquireFromPool(ThreadPool *pool);
 void retrieveToPool(ThreadPool *pool, RunningThread rt);
 int tickPool(ThreadPool *pool);
 void exitFromPool(ThreadPool *pool, int tid);
-void wakeupFromPool(ThreadPool *pool, int tid);
 
 // Processor 相关函数
 void initCPU(Thread idle, ThreadPool pool);
