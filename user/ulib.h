@@ -13,5 +13,6 @@ void free(void *ptr);
 
 /*  string.c    */
 int strcmp(char *str1, char *str2);
+int strlen(char *str);
 
 #endif

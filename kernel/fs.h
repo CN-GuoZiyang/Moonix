@@ -29,5 +29,6 @@ typedef struct
 
 Inode *lookup(Inode *node, char *filename);
 void readall(Inode *node, char *buf);
+void ls(Inode *node);
 
 #endif

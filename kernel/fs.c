@@ -118,3 +118,33 @@ readall(Inode *node, char *buf) {
         }
     }
 }
+
+void
+ls(Inode *node)
+{
+    if(node->type == TYPE_FILE) {
+        printf("%s: is not a directory\n", node->filename);
+        return;
+    }
+    // 首先输出头两个固定的文件夹
+    printf(". ..");
+    if(node->blocks <= 12) {
+        int i;
+        for(i = 2; i < node->blocks; i ++) {
+            Inode *t = (Inode *)getBlockAddr(node->direct[i]);
+            printf(" %s", t->filename);
+        }
+    } else {
+        int i;
+        for(i = 2; i < 12; i ++) {
+            Inode *t = (Inode *)getBlockAddr(node->direct[i]);
+            printf(" %s", t->filename);
+        }
+        uint32 *indirect = (uint32 *)getBlockAddr(node->indirect);
+        for(i = 0; i < node->blocks-12; i ++) {
+            Inode *t = (Inode *)getBlockAddr(indirect[i]);
+            printf(" %s", t->filename);
+        }
+    }
+    printf("\n");
+}

@@ -29,6 +29,27 @@ empty(char *line, int length)
     }
 }
 
+int
+isBuildIn(char *line) {
+    if(!strcmp("shutdown", line)) {
+        sys_shut();
+        return 1;
+    }
+    int len = strlen(line);
+    // 处理 ls
+    if(len >= 2 && line[0] == 'l' && line[1] == 's' && (line[2] == ' ' || line[2] == '\t' || line[2] == '\0')) {
+        line += 3;
+        while(*line == ' ' || *line == '\t') line ++;
+        if(*line == 0) {
+            printf("ls: need a path\n");
+            return 1;
+        }
+        sys_lsdir(line);
+        return 1;
+    }
+    return 0;
+}
+
 uint64
 main()
 {
@@ -44,9 +65,7 @@ main()
                 if(!isEmpty(line, 256)) {
                     char *stripLine = line;
                     while(*stripLine == ' ' || *stripLine == '\t') stripLine ++;
-                    if(!strcmp("shutdown", stripLine)) {
-                        sys_shut();
-                    } else {
+                    if(!isBuildIn(stripLine)) {
                         sys_exec(stripLine);
                     }
                     lineCount = 0;
