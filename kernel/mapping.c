@@ -4,14 +4,12 @@
 #include "mapping.h"
 
 // 根据虚拟页号得到三级页号
-usize
-*getVpnLevels(usize vpn)
+void
+getVpnLevels(usize vpn, usize *levels)
 {
-    static usize res[3];
-    res[0] = (vpn >> 18) & 0x1ff;
-    res[1] = (vpn >> 9) & 0x1ff;
-    res[2] = vpn & 0x1ff;
-    return res;
+    levels[0] = (vpn >> 18) & 0x1ff;
+    levels[1] = (vpn >> 9) & 0x1ff;
+    levels[2] = vpn & 0x1ff;
 }
 
 // 创建一个有根页表的映射
@@ -29,7 +27,7 @@ PageTableEntry
 *findEntry(Mapping self, usize vpn)
 {
     PageTable *rootTable = (PageTable *)accessVaViaPa(self.rootPpn << 12);
-    usize *levels = getVpnLevels(vpn);
+    usize levels[3]; getVpnLevels(vpn, levels);
     PageTableEntry *entry = &(rootTable->entries[levels[0]]);
     int i;
     for(i = 1; i <= 2; i ++) {
