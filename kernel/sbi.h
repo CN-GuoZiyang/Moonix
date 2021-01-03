@@ -1,7 +1,7 @@
 #ifndef _SBI_H
 #define _SBI_H
 
-// SBI 调用号
+/* SBI 调用号 */
 #define SBI_SET_TIMER               0x0
 #define SBI_CONSOLE_PUTCHAR         0x1
 #define SBI_CONSOLE_GETCHAR         0x2
@@ -25,6 +25,7 @@
 		a0;                                                           \
 	})
 
+/* 对于 0 个参数、1 个参数和 2 个参数的调用进行包装 */
 #define SBI_ECALL_0(__num) SBI_ECALL(__num, 0, 0, 0)
 #define SBI_ECALL_1(__num, __a0) SBI_ECALL(__num, __a0, 0, 0)
 #define SBI_ECALL_2(__num, __a0, __a1) SBI_ECALL(__num, __a0, __a1, 0)

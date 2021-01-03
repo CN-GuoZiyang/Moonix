@@ -10,7 +10,7 @@ typedef unsigned short uint16;
 typedef unsigned int  uint32;
 typedef unsigned long uint64;
 
-// RV64 位宽
+/* RV64 位宽 */
 typedef uint64 usize;
 
 #endif

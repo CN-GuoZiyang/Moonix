@@ -1,9 +1,15 @@
+/*
+ *  kernel/mapping.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "def.h"
 #include "consts.h"
 #include "mapping.h"
 
-// 根据虚拟页号得到三级页号
+/* 根据虚拟页号得到其对应页表项在三级页表中的位置 */
 void
 getVpnLevels(usize vpn, usize *levels)
 {
@@ -12,7 +18,10 @@ getVpnLevels(usize vpn, usize *levels)
     levels[2] = vpn & 0x1ff;
 }
 
-// 创建一个有根页表的映射
+/* 
+ * 创建一个有根页表的映射
+ * 只分配了三级页表的空间
+ */
 Mapping
 newMapping()
 {
@@ -21,8 +30,10 @@ newMapping()
     return m;
 }
 
-// 根据给定的虚拟页号寻找三级页表项
-// 如果找不到对应页表项就会创建页表
+/* 
+ * 根据给定的虚拟页号寻找三级页表项
+ * 如果某一级页表项为空，会创建下一级页表并填充
+ */
 PageTableEntry
 *findEntry(Mapping self, usize vpn)
 {
@@ -31,8 +42,8 @@ PageTableEntry
     PageTableEntry *entry = &(rootTable->entries[levels[0]]);
     int i;
     for(i = 1; i <= 2; i ++) {
+        /* 页表不存在，创建新页表 */
         if(*entry == 0) {
-            // 页表不存在，创建新页表
             usize newPpn = allocFrame() >> 12;
             *entry = (newPpn << 10) | VALID;
         }
@@ -42,7 +53,10 @@ PageTableEntry
     return entry;
 }
 
-// 线性映射一个段，填充页表
+/*
+ * 线性映射一个段
+ * 段中的每一个虚拟地址都会按照固定偏移量线性映射到一个物理地址
+ */
 void
 mapLinearSegment(Mapping self, Segment segment)
 {
@@ -58,7 +72,10 @@ mapLinearSegment(Mapping self, Segment segment)
     }
 }
 
-// 映射一个未被分配物理内存的段
+/* 
+ * 映射一个未被分配物理内存的段
+ * 在映射时会实时分配物理内存并填充页表项
+ */
 void
 mapFramedSegment(Mapping m, Segment segment)
 {
@@ -74,8 +91,11 @@ mapFramedSegment(Mapping m, Segment segment)
     }
 }
 
-// 映射一个未被分配物理内存的段
-// 并复制数据到新分配的内存
+/* 
+ * 映射一个未被分配物理内存的段
+ * 在映射时会实时分配物理内存并填充页表项
+ * 并将数据复制到新分配的内存区域
+ */
 void
 mapFramedAndCopy(Mapping m, Segment segment, char *data, usize length)
 {
@@ -90,7 +110,10 @@ mapFramedAndCopy(Mapping m, Segment segment, char *data, usize length)
         }
         usize pAddr = allocFrame();
         *entry = (pAddr >> 2) | segment.flags | VALID;
-        // 复制数据到目标位置
+        /* 
+         * 复制数据到目标位置
+         * 访问目标位置还得通过虚拟地址访问
+         */
         char *dst = (char *)accessVaViaPa(pAddr);
         if(l >= PAGE_SIZE) {
             char *src = (char *)s;
@@ -114,7 +137,10 @@ mapFramedAndCopy(Mapping m, Segment segment, char *data, usize length)
     }
 }
 
-// 激活页表
+/*
+ * 将页表地址写入 satp 中
+ * 设置 satp 为 SV39，并刷新 TLB
+ */
 void
 activateMapping(Mapping self)
 {
@@ -123,13 +149,17 @@ activateMapping(Mapping self)
     asm volatile("sfence.vma":::);
 }
 
-// 映射内核，并返回页表（不激活）
+/* 
+ * 创建一个映射了内核的虚拟地址空间
+ * 在该地址空间中，内核的各个段按照固定的偏移被映射到虚拟地址空间的高地址空间处
+ * 不激活
+ */
 Mapping
 newKernelMapping()
 {
     Mapping m = newMapping();
     
-    // .text 段，r-x
+    /* .text 段，r-x */
     Segment text = {
         (usize)text_start,
         (usize)rodata_start,
@@ -137,7 +167,7 @@ newKernelMapping()
     };
     mapLinearSegment(m, text);
 
-    // .rodata 段，r--
+    /* .rodata 段，r-- */
     Segment rodata = {
         (usize)rodata_start,
         (usize)data_start,
@@ -145,7 +175,7 @@ newKernelMapping()
     };
     mapLinearSegment(m, rodata);
 
-    // .data 段，rw-
+    /* .data 段，rw- */
     Segment data = {
         (usize)data_start,
         (usize)bss_start,
@@ -153,7 +183,7 @@ newKernelMapping()
     };
     mapLinearSegment(m, data);
 
-    // .bss 段，rw-
+    /* .bss 段，rw- */
     Segment bss = {
         (usize)bss_start,
         (usize)kernel_end,
@@ -161,7 +191,7 @@ newKernelMapping()
     };
     mapLinearSegment(m, bss);
 
-    // 剩余空间，rw-
+    /* 剩余空间，rw- */
     Segment other = {
         (usize)kernel_end,
         (usize)(MEMORY_END_PADDR + KERNEL_MAP_OFFSET),
@@ -172,7 +202,10 @@ newKernelMapping()
     return m;
 }
 
-// 映射外部中断相关区域
+/* 
+ * 由于启用外部中断和键盘中断需要修改一部分内存
+ * 将这部分内存也线性映射到虚拟地址空间
+ */
 void
 mapExtInterruptArea(Mapping m)
 {
@@ -205,7 +238,7 @@ mapExtInterruptArea(Mapping m)
     mapLinearSegment(m, s4);
 }
 
-// 映射内核
+/* 重映射内核 */
 void
 mapKernel()
 {
@@ -214,7 +247,7 @@ mapKernel()
     activateMapping(m);
 }
 
-// 获得线性映射后的虚拟地址
+/* 获得线性映射后的虚拟地址 */
 usize
 accessVaViaPa(usize pa)
 {

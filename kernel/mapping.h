@@ -4,16 +4,18 @@
 #include "types.h"
 #include "consts.h"
 
-// 页表项长度 64 位
-typedef usize PageTableEntry;
+typedef usize PageTableEntry;   /* 页表项长度 64 位 */
 
-// 一页页表中可存储 4096 / 8 个页表项
+/*
+ * 页表由页表项组成 
+ * 一页页表中包含 4096 / 8 个页表项
+ */
 typedef struct
 {
     PageTableEntry entries[PAGE_SIZE >> 3];
 } PageTable;
 
-// 页表项的 8 个标志位
+/* 页表项的 8 个标志位 */
 #define VALID       1 << 0
 #define READABLE    1 << 1
 #define WRITABLE    1 << 2
@@ -23,24 +25,22 @@ typedef struct
 #define ACCESSED    1 << 6
 #define DIRTY       1 << 7
 
-// 映射片段，描述一个映射的行为
+// 映射片段，描述映射到虚拟内存的一个段
 typedef struct
 {
-    // 映射虚拟地址范围
+    /* 映射虚拟地址范围 */
     usize startVaddr;
     usize endVaddr;
-    // 映射的权限标志
+    /* 该段映射的权限 */
     usize flags;
 } Segment;
 
-// 某个进程的内存映射关系
+/* 一个虚拟地址空间，可能映射了多个段 */
 typedef struct
 {
-    // 根页表的物理页号
-    usize rootPpn;
+    usize rootPpn;      /* 根页表的物理页号 */
 } Mapping;
 
-// 访问通过内核线性映射的虚拟地址
 usize accessVaViaPa(usize pa);
 
 Mapping newKernelMapping();

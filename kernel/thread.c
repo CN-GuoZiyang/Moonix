@@ -1,3 +1,9 @@
+/*
+ *  kernel/thread.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "def.h"
 #include "consts.h"
@@ -10,11 +16,17 @@
 usize
 newKernelStack()
 {
-    // 将内核线程的线程栈分配在堆空间
+    /* 将内核线程的线程栈分配在内核堆中 */
     usize bottom = (usize)kalloc(KERNEL_STACK_SIZE);
     return bottom;
 }
 
+/*
+ * 该函数用于切换上下文，保存当前函数的上下文，并恢复目标函数的上下文
+ * 函数返回时即返回到了新线程的运行位置
+ * naked 防止 gcc 自动插入开场白和结束语，这部分需要自行保存恢复
+ * noinline 防止 gcc 将函数内联，上下文切换借助了函数调用返回，不应内联
+ */
 __attribute__((naked, noinline)) void
 switchContext(usize *self, usize *target)
 {
@@ -30,7 +42,10 @@ switchThread(Thread *self, Thread *target)
 usize
 pushContextToStack(ThreadContext self, usize stackTop)
 {
-    // 将线程上下文压入栈底
+    /*
+     * 将线程上下文压入栈顶
+     * 并返回新的栈顶地址
+     */
     ThreadContext *ptr = (ThreadContext *)(stackTop - sizeof(ThreadContext));
     *ptr = self;
     return (usize)ptr;
@@ -39,13 +54,18 @@ pushContextToStack(ThreadContext self, usize stackTop)
 usize
 newKernelThreadContext(usize entry, usize kernelStackTop, usize satp)
 {
+    /*
+     * 创建新的内核线程
+     * 借助中断恢复机制进行线程的初始化工作
+     * 从中断恢复结束时即跳转到 sepc，就是线程的入口点
+     */
     InterruptContext ic;
     ic.x[2] = kernelStackTop;
     ic.sepc = entry;
     ic.sstatus = r_sstatus();
-    // 设置返回后的特权级为 S-Mode
+    /* 内核线程，返回后特权级为 S-Mode */
     ic.sstatus |= SSTATUS_SPP;
-    // 异步中断使能
+    /* 开启新线程异步中断使能 */
     ic.sstatus |= SSTATUS_SPIE;
     ic.sstatus &= ~SSTATUS_SIE;
     ThreadContext tc;
@@ -59,12 +79,12 @@ usize
 newUserThreadContext(usize entry, usize ustackTop, usize kstackTop, usize satp)
 {
     InterruptContext ic;
+    /* 新线程使用的栈为用户栈 */
     ic.x[2] = ustackTop;
     ic.sepc = entry;
     ic.sstatus = r_sstatus();
-    // 设置返回后的特权级为 U-Mode
+    /* 用户线程，返回后的特权级为 U-Mode */
     ic.sstatus &= ~SSTATUS_SPP;
-    // 异步中断使能
     ic.sstatus |= SSTATUS_SPIE;
     ic.sstatus &= ~SSTATUS_SIE;
     ThreadContext tc;
@@ -74,6 +94,10 @@ newUserThreadContext(usize entry, usize ustackTop, usize kstackTop, usize satp)
     return pushContextToStack(tc, kstackTop);
 }
 
+/*
+ * 借助函数调用机制向新线程传递参数
+ * 最多可传递 8 个参数
+ */
 void
 appendArguments(Thread thread, usize args[8])
 {
@@ -107,9 +131,10 @@ newKernelThread(usize entry)
 Thread
 newUserThread(char *data)
 {
+    /* 解析 ELF 文件，完成内核和可执行程序各个段的映射 */
     Mapping m = newUserMapping(data);
     usize ustackBottom = USER_STACK_OFFSET, ustackTop = USER_STACK_OFFSET + USER_STACK_SIZE;
-    // 将用户栈映射
+    /* 映射用户栈 */
     Segment s = {ustackBottom, ustackTop, 1L | USER | READABLE | WRITABLE};
     mapFramedSegment(m, s);
 
@@ -126,22 +151,13 @@ newUserThread(char *data)
     return t;
 }
 
-void
-helloThread(usize arg)
-{
-    printf("Begin of thread %d\n", arg);
-    int i;
-    for(i = 0; i < 800; i ++) {
-        printf("%d", arg);
-    }
-    printf("\nEnd of thread %d\n", arg);
-    exitFromCPU(0);
-    while(1) {}
-}
-
 Thread
 newBootThread()
 {
+    /*
+     * 该函数调用时，应当处于启动线程内
+     * 只需要创建一个空结构，在进行切换时即可自动填充
+     */
     Thread t;
     t.contextAddr = 0L;
     t.kstack = 0L;
@@ -164,7 +180,7 @@ initThread()
     Thread idle = newKernelThread((usize)idleMain);
     initCPU(idle, pool);
 
-    // 从文件系统中读取 elf 文件
+    /* 启动终端 */
     Inode *shInode = lookup(0, "/bin/sh");
     char *buf = kalloc(shInode->size);
     readall(shInode, buf);

@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-/*  sbi.c    */
+/* sbi.c */
 void consolePutchar(usize c);
 usize consoleGetchar();
 void shutdown() __attribute__((noreturn));
@@ -13,18 +13,18 @@ void setTimer(usize time);
 void printf(char *, ...);
 void panic(char*) __attribute__((noreturn));
 
-/*  heap.c  */
-void *kalloc(uint32 size);
+/* heap.c */
+void *kalloc(int size);
 void kfree(void *ptr);
 
-/*  memory.c    */
+/* memory.c */
 usize allocFrame();
 void deallocFrame(usize ppn);
 
-/*  processor.c    */
+/* processor.c */
 void exitFromCPU(usize code);
 
-/*  string.c    */
+/* string.c */
 int strlen(char *str);
 int strcmp(char *str1, char *str2);
 

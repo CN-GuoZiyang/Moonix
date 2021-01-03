@@ -30,10 +30,9 @@ sysExec(char *path)
 usize
 sysLsDir(char *path)
 {
-
     Inode *node = lookup(0, path);
     if(node == 0) {
-        printf("%s: No such file or directory\n");
+        printf("ls: No such file or directory\n");
         return 0;
     }
     ls(node);

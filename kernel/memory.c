@@ -1,15 +1,21 @@
+/*
+ *  kernel/memory.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "def.h"
 #include "memory.h"
 #include "consts.h"
 #include "riscv.h"
 
-// 全局页帧分配器
+/* 全局唯一的页帧分配器 */
 FrameAllocator frameAllocator;
 
-// 分配算法的三个关键函数
+/* 分配算法需要实现的三个函数 */
 Allocator newAllocator(usize startPpn, usize endPpn);
-usize alloc();
+usize alloc();                                           
 void dealloc(usize ppn);
 
 void
@@ -19,12 +25,19 @@ initFrameAllocator(usize startPpn, usize endPpn)
     frameAllocator.allocator = newAllocator(startPpn, endPpn);
 }
 
-// 返回物理页的起始地址
+/*
+ * 分配一个物理页
+ * 返回物理页的起始地址
+ */
 usize
 allocFrame()
 {
     usize start = alloc() << 12;
     int i;
+    /*
+     * 清空被分配的区域
+     * 这里访问需要通过虚拟地址
+     */
     char *vStart = (char *)(start + KERNEL_MAP_OFFSET);
     for(i = 0; i < PAGE_SIZE; i ++) {
         vStart[i] = 0;
@@ -32,18 +45,27 @@ allocFrame()
     return (usize)start;
 }
 
-// 参数为物理页的起始地址
+/*
+ * 回收一个物理页
+ * 参数为物理页的起始物理地址
+ */
 void
 deallocFrame(usize startAddr)
 {
     dealloc(startAddr >> 12);
 }
 
-// 初始化页分配和动态内存分配
+/*
+ * 初始化页分配和动态内存分配
+ * 并重映射内核
+ */
 void
 initMemory()
 {
-    // 打开 sstatus 的 SUM 位，允许内核访问用户内存
+    /* 
+     * 开启 sstatus 的 SUM 位
+     * 允许内核访问用户内存
+     */
     w_sstatus(r_sstatus() | SSTATUS_SUM);
     initFrameAllocator(
         (((usize)(kernel_end) - KERNEL_MAP_OFFSET) >> 12) + 1,
@@ -55,21 +77,17 @@ initMemory()
 }
 
 
-/*    以下为分配算法的具体实现    */
+/* 以下为分配算法的具体实现 */
 
-// 最大可用的内存长度，从 0x80000000 ~ 0x88000000
+/* 最大可用的内存长度，从 0x80000000 ~ 0x88000000 */
 #define MAX_PHYSICAL_PAGES 0x8000
 
 struct
 {
-    // 线段树的节点，每个都表示该范围内是否有空闲页
-    uint8 node[MAX_PHYSICAL_PAGES << 1];
-    // 第一个单块节点的下标
-    usize firstSingle;
-    // 分配区间长度
-    usize length;
-    // 分配的起始 ppn
-    usize startPpn;
+    uint8 node[MAX_PHYSICAL_PAGES << 1];    /* 线段树的节点，每个都表示该范围内是否有空闲页 */
+    usize firstSingle;                      /* 第一个单块节点的下标 */
+    usize length;                           /* 分配区间长度 */
+    usize startPpn;                         /* 分配的起始 ppn */
 } sta;
 
 Allocator
@@ -95,7 +113,10 @@ newAllocator(usize startPpn, usize endPpn)
     return ac;
 }
 
-// 分配一个物理页，返回物理页号
+/*
+ * 分配一个物理页
+ * 返回物理页号
+ */
 usize
 alloc()
 {
@@ -120,7 +141,10 @@ alloc()
     return result;
 }
 
-// 回收物理页，参数是物理页号
+/*
+ * 回收物理页
+ * 参数是物理页号
+ */
 void
 dealloc(usize ppn)
 {

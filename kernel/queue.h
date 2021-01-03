@@ -3,11 +3,13 @@
 
 #include "types.h"
 
+/* 队列中的元素 */
 typedef struct n {
     usize item;
     struct n *next;
 } Node;
 
+/* 一个队列，两个指针指向首尾元素 */
 typedef struct {
     Node *head;
     Node *tail;

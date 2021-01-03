@@ -1,3 +1,13 @@
+/*
+ *  kernel/string.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
+/*
+ * string.c 定义了几个函数，用于便捷地操作字符串
+ */
+
 #include "types.h"
 #include "def.h"
 

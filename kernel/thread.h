@@ -6,24 +6,19 @@
 #include "consts.h"
 #include "condition.h"
 
-// 进程为资源分配的单位
-// 保存线程共享资源
+/* 进程为资源分配的单位，保存线程共享资源 */
 typedef struct {
-    // 页表寄存器
-    usize satp;
+    usize satp;         /* 页表寄存器 */
 } Process;
 
 typedef struct {
-    // 线程上下文存储的地址
-    usize contextAddr;
-    // 线程栈底地址
-    usize kstack;
-    // 所属进程
-    Process process;
-    // 等待其退出的 Tid
-    int wait;
+    usize contextAddr;  /* 线程上下文存储的地址 */
+    usize kstack;       /* 线程栈底地址 */
+    Process process;    /* 所属进程 */
+    int wait;           /* 等待该线程退出的线程的 Tid */
 } Thread;
 
+/* 线程状态 */
 typedef enum {
     Ready,
     Running,
@@ -31,7 +26,7 @@ typedef enum {
     Exited
 } Status;
 
-// 调度器（函数指针）
+/* 调度器算法实现 */
 typedef struct {
     void    (* init)(void);
     void    (* push)(int);
@@ -40,11 +35,11 @@ typedef struct {
     void    (* exit)(int);
 } Scheduler;
 
-// 线程池中存储的线程信息
+/* 线程池中的线程信息槽 */
 typedef struct {
     Status status;
     int tid;
-    int occupied;
+    int occupied;       /* 该槽位是否被占用 */
     Thread thread;
 } ThreadInfo;
 
@@ -53,7 +48,6 @@ typedef struct {
     Scheduler scheduler;
 } ThreadPool;
 
-// 表示一个正在运行的线程
 typedef struct {
     int tid;
     Thread thread;
@@ -66,11 +60,11 @@ typedef struct {
     int occupied;
 } Processor;
 
-// 线程相关函数
+/* 线程相关函数 */
 void switchThread(Thread *self, Thread *target);
 Thread newUserThread(char *data);
 
-// 线程池相关函数
+/* 线程池相关函数 */
 ThreadPool newThreadPool(Scheduler scheduler);
 void addToPool(ThreadPool *pool, Thread thread);
 RunningThread acquireFromPool(ThreadPool *pool);
@@ -78,7 +72,7 @@ void retrieveToPool(ThreadPool *pool, RunningThread rt);
 int tickPool(ThreadPool *pool);
 void exitFromPool(ThreadPool *pool, int tid);
 
-// Processor 相关函数
+/* Processor 相关函数 */
 void initCPU(Thread idle, ThreadPool pool);
 void addToCPU(Thread thread);
 void idleMain();
@@ -90,7 +84,7 @@ void wakeupCPU(int tid);
 int executeCPU(char *path, int hostTid);
 int getCurrentTid();
 
-// 调度器相关函数
+/* 调度器相关函数 */
 void schedulerInit();
 void schedulerPush(int tid);
 int  schedulerPop();

@@ -1,3 +1,14 @@
+/*
+ *  kernel/printf.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
+/*
+ * printf.c 仿照 C 语言实现了 printf 函数，用于格式化输出各种类型的数据
+ * panic 函数用于在错误发生时输出错误信息并关闭操作系统
+ */
+
 #include <stdarg.h>
 #include "types.h"
 #include "def.h"

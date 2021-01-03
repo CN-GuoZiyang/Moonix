@@ -1,11 +1,22 @@
+/*
+ *  kernel/fs.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "def.h"
 #include "fs.h"
 
-Inode *ROOT_INODE;
-char *FREEMAP;
+Inode *ROOT_INODE;      /* 根目录的 Inode */
+char *FREEMAP;          /* 指向空闲 map 的指针 */
 
+/* 
+ * 目前文件系统被装载到 .data 段中
+ * _fs_img_start 为文件系统部分内存的起始符号
+ */
 extern void _fs_img_start();
+
 
 usize
 getBlockAddr(int blockNum) {
@@ -22,6 +33,10 @@ initFs()
     ROOT_INODE = (Inode *)getBlockAddr(spBlock->freemapBlocks + 1);
 }
 
+/*
+ * 在当前 Inode 所代表的文件夹中查找目标路径的 Inode
+ * 当 filename 以 / 开头时直接从根目录开始查找
+ */
 Inode *
 lookup(Inode *node, char *filename)
 {
@@ -32,6 +47,10 @@ lookup(Inode *node, char *filename)
     if(node == 0) node = ROOT_INODE;
     if(*filename == '\0') return node;
     if(node->type != TYPE_DIR) return 0;
+    /*
+     * filename 可能包含多层目录
+     * 从 filename 中分割出来当前文件夹下需要寻找的文件名
+     */
     char cTarget[strlen(filename) + 1];
     int i = 0;
     while (*filename != '/' && *filename != '\0') {
@@ -49,7 +68,9 @@ lookup(Inode *node, char *filename)
         return lookup(upLevel, filename);
     }
     int blockNum = node->blocks;
+    /* 在当前文件夹下查找，寻找到 Inode 后递归搜索下一级 */
     if(blockNum <= 12) {
+        /* 跳过第 0 个和第 1 个，它们分别代表当前文件夹和上一级文件夹 */
         for(i = 2; i < blockNum; i ++) {
             Inode *candidate = (Inode *)getBlockAddr(node->direct[i]);
             if(!strcmp((char *)candidate->filename, cTarget)) {
@@ -84,6 +105,7 @@ copyByteToBuf(char *src, char *dst, int length)
     }
 }
 
+/* 读取一个表示文件的 Inode 的所有字节到 buf 中 */
 void
 readall(Inode *node, char *buf) {
     if(node->type != TYPE_FILE) {
@@ -119,6 +141,7 @@ readall(Inode *node, char *buf) {
     }
 }
 
+/* 输出某个文件夹下的所有文件名 */
 void
 ls(Inode *node)
 {
@@ -126,7 +149,7 @@ ls(Inode *node)
         printf("%s: is not a directory\n", node->filename);
         return;
     }
-    // 首先输出头两个固定的文件夹
+    /* 首先输出头两个固定的文件夹 */
     printf(". ..");
     if(node->blocks <= 12) {
         int i;

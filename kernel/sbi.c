@@ -1,3 +1,13 @@
+/*
+ *  kernel/sbi.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
+/*
+ * sbi.c 对 OpenSBI 提供的服务进行简单的包装
+ */
+
 #include "types.h"
 #include "def.h"
 #include "sbi.h"

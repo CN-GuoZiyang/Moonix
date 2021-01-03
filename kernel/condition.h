@@ -4,7 +4,10 @@
 #include "types.h"
 #include "queue.h"
 
-// 条件变量，内部为等待该条件满足的等待线程队列
+/* 
+ * 条件变量
+ * 内部为等待该条件满足的等待线程队列
+ */
 typedef struct {
     Queue waitQueue;
 } Condvar;

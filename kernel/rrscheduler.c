@@ -1,3 +1,15 @@
+/*
+ *  kernel/rrscheduler.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
+/*
+ * rrscheduler.c 实现了 Round-robin 算法
+ * 该实现规定了最大线程数量，以链表的形式将各个线程的信息连接起来
+ * tid 号线程的信息会被存放在数组的 tid + 1 处
+ */
+
 #include "types.h"
 #include "def.h"
 #include "thread.h"
@@ -22,6 +34,7 @@ schedulerInit()
 {
     rrScheduler.maxTime = 1;
     rrScheduler.current = 0;
+    /* 第 0 个位置为 Dummy head，用于快速找到链表头和尾 */
     RRInfo ri = {0, 0L, 0, 0};
     rrScheduler.threads[0] = ri;
 }
