@@ -1,3 +1,9 @@
+#
+#  Makefile
+#  
+#  (C) 2021  Ziyang Guo
+#
+
 K=kernel
 U=user
 

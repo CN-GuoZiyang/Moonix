@@ -1,3 +1,14 @@
+/*
+ *  user/io.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
+/*
+ * io.c 定义了 U-Mode 下可用的 printf 和 getc
+ * 大都拷贝自内核的 printf.c，OpenSBI 调用被替换为系统调用
+ */
+
 #include <stdarg.h>
 #include "types.h"
 #include "ulib.h"

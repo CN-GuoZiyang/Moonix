@@ -1,3 +1,9 @@
+/*
+ *  user/string.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "ulib.h"
 

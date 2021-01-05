@@ -1,3 +1,9 @@
+/*
+ *  user/sh.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "ulib.h"
 #include "syscall.h"
@@ -36,7 +42,7 @@ isBuildIn(char *line) {
         return 1;
     }
     int len = strlen(line);
-    // 处理 ls
+    /* 处理 ls */
     if(len >= 2 && line[0] == 'l' && line[1] == 's' && (line[2] == ' ' || line[2] == '\t' || line[2] == '\0')) {
         line += 3;
         while(*line == ' ' || *line == '\t') line ++;
@@ -79,6 +85,7 @@ main()
                 empty(line, 256);
                 printf("$ ");
                 break;
+            /* 支持退格键 */
             case DL:
                 if(lineCount > 0) {
                     putchar(BS);
