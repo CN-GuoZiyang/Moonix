@@ -41,6 +41,9 @@ UPROS =						\
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-
+ifeq ($(shell uname),Darwin)
+	TOOLPREFIX=riscv64-unknown-elf-
+endif
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -91,7 +94,7 @@ $U/%.o: $U/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f */*.d */*.o $K/Kernel $U/User Image User Image.asm mksfs fs.img
+	rm -f */*.d */*.o $K/Kernel Image Image.asm mksfs fs.img
 	rm -rf rootfs
 	
 asm: Kernel
