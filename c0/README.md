@@ -36,6 +36,23 @@ $ sudo pacman -S riscv64-linux-gnu-binutils riscv64-linux-gnu-gcc riscv64-linux-
 $ sudo apt install git build-essential gdb-multiarch gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu
 ```
 
+## 在 MacOS 下安装
+
+在 MacOS 下需要借助 Homebrew 这个包管理器：
+
+```bash
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+随后使用 Homebrew 安装工具链：
+
+```bash
+$ brew tap riscv/riscv
+$ brew install riscv-tools
+```
+
+注意：MacOS 下的工具链前缀为 **riscv64-unknown-elf-**
+
 ## 验证工具链
 
 为了验证工具链安装成功，可以执行如下指令，输出类似内容即为安装成功：
@@ -43,6 +60,16 @@ $ sudo apt install git build-essential gdb-multiarch gcc-riscv64-linux-gnu binut
 ```bash
 $ riscv64-linux-gnu-gcc --version
 riscv64-linux-gnu-gcc (GCC) 10.2.0
+Copyright (C) 2020 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
+MacOS 下为：
+
+```bash
+$ riscv64-unknown-elf-gcc --version
+riscv64-unknown-elf-gcc (GCC) 10.2.0
 Copyright (C) 2020 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
