@@ -18,14 +18,20 @@ typedef struct {
 #define TYPE_FILE   0           /* 文件类型：普通文件 */
 #define TYPE_DIR    1           /* 文件类型：文件夹 */
 
+typedef struct
+{
+    uint8 filename[28];         /* 文件名称 */
+    uint32 block;               /* 磁盘块号 */
+} InodeItem;
+
 /* Inode 块结构 */
 typedef struct
 {
     uint32 size;                /* 文件大小，type 为 TYPE_DIR 时该字段为 0 */
     uint32 type;                /* 文件类型 */
-    uint8 filename[32];         /* 文件名称 */
+    uint8 filename[28];         /* 文件名称 */
     uint32 blocks;              /* 占据磁盘块个数 */
-    uint32 direct[12];          /* 直接磁盘块 */
+    InodeItem direct[12];       /* 直接磁盘块 */
     uint32 indirect;            /* 间接磁盘块 */
 } Inode;
 

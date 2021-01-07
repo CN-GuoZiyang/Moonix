@@ -59,36 +59,32 @@ lookup(Inode *node, char *filename)
         i ++;
     }
     cTarget[i] = '\0';
+    
     if(*filename == '/') filename ++;
-    if(!strcmp(".", cTarget)) {
-        return lookup(node, filename);
-    }
-    if(!strcmp("..", cTarget)) {
-        Inode *upLevel = (Inode *)getBlockAddr(node->direct[1]);
-        return lookup(upLevel, filename);
-    }
     int blockNum = node->blocks;
     /* 在当前文件夹下查找，寻找到 Inode 后递归搜索下一级 */
     if(blockNum <= 12) {
-        /* 跳过第 0 个和第 1 个，它们分别代表当前文件夹和上一级文件夹 */
-        for(i = 2; i < blockNum; i ++) {
-            Inode *candidate = (Inode *)getBlockAddr(node->direct[i]);
-            if(!strcmp((char *)candidate->filename, cTarget)) {
+        for(i = 0; i < blockNum; i ++) {
+            InodeItem candidateItem = node->direct[i];
+            if(!strcmp((char *)candidateItem.filename, cTarget)) {
+                Inode *candidate = (Inode *)getBlockAddr(node->direct[i].block);
                 return lookup(candidate, filename);
             }
         }
         return 0;
     } else {
-        for(i = 2; i < 12; i ++) {
-            Inode *candidate = (Inode *)getBlockAddr(node->direct[i]);
-            if(!strcmp((char *)candidate->filename, cTarget)) {
+        for(i = 0; i < 12; i ++) {
+            InodeItem candidateItem = node->direct[i];
+            if(!strcmp((char *)candidateItem.filename, cTarget)) {
+                Inode *candidate = (Inode *)getBlockAddr(node->direct[i].block);
                 return lookup(candidate, filename);
             }
         }
-        uint32 *indirect = (uint32 *)getBlockAddr(node->indirect);
+        InodeItem *indirect = (InodeItem *)getBlockAddr(node->indirect);
         for(i = 12; i < blockNum; i ++) {
-            Inode *candidate = (Inode *)getBlockAddr(indirect[i-12]);
-            if(!strcmp((char *)candidate->filename, cTarget)) {
+            InodeItem candidateItem = indirect[i];
+            if(!strcmp((char *)candidateItem.filename, cTarget)) {
+                Inode *candidate = (Inode *)getBlockAddr(node->direct[i].block);
                 return lookup(candidate, filename);
             }
         }
@@ -115,7 +111,7 @@ readall(Inode *node, char *buf) {
     if(b <= 12) {
        int i;
        for(i = 0; i < b; i ++) {
-           char *src = (char *)getBlockAddr(node->direct[i]);
+           char *src = (char *)getBlockAddr(node->direct[i].block);
            int copySize = l >= 4096 ? 4096 : l;
            copyByteToBuf(src, buf, copySize);
            buf += copySize;
@@ -124,15 +120,15 @@ readall(Inode *node, char *buf) {
     } else {
         int i;
         for(i = 0; i < 12; i ++) {
-            char *src = (char *)getBlockAddr(node->direct[i]);
+            char *src = (char *)getBlockAddr(node->direct[i].block);
             int copySize = l >= 4096 ? 4096 : l;
             copyByteToBuf(src, buf, copySize);
             buf += copySize;
             l -= copySize;
         }
-        uint32 *indirect = (uint32 *)getBlockAddr(node->indirect);
+        InodeItem *indirect = (InodeItem *)getBlockAddr(node->indirect);
         for(i = 0; i < b-12; i ++) {
-            char *src = (char *)getBlockAddr(indirect[i]);
+            char *src = (char *)getBlockAddr(indirect[i].block);
             int copySize = l >= 4096 ? 4096 : l;
             copyByteToBuf(src, buf, copySize);
             buf += copySize;
@@ -149,24 +145,19 @@ ls(Inode *node)
         printf("%s: is not a directory\n", node->filename);
         return;
     }
-    /* 首先输出头两个固定的文件夹 */
-    printf(". ..");
     if(node->blocks <= 12) {
         int i;
-        for(i = 2; i < node->blocks; i ++) {
-            Inode *t = (Inode *)getBlockAddr(node->direct[i]);
-            printf(" %s", t->filename);
+        for(i = 0; i < node->blocks; i ++) {
+            printf("%s ", node->direct[i].filename);
         }
     } else {
         int i;
-        for(i = 2; i < 12; i ++) {
-            Inode *t = (Inode *)getBlockAddr(node->direct[i]);
-            printf(" %s", t->filename);
+        for(i = 0; i < 12; i ++) {
+            printf("%s ", node->direct[i].filename);
         }
-        uint32 *indirect = (uint32 *)getBlockAddr(node->indirect);
+        InodeItem *indirect = (InodeItem *)getBlockAddr(node->indirect);
         for(i = 0; i < node->blocks-12; i ++) {
-            Inode *t = (Inode *)getBlockAddr(indirect[i]);
-            printf(" %s", t->filename);
+            printf("%s ", indirect[i].filename);
         }
     }
     printf("\n");

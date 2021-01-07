@@ -37,7 +37,7 @@ uint64 getBlockAddr(int blockNum);
 int getFreeBlock();
 void copyInodeToBlock(int blockNum, Inode *in);
 
-void
+int
 main()
 {
     /* 
@@ -97,6 +97,7 @@ main()
     FILE *img = fopen("fs.img", "w+b");
     fwrite(Image, sizeof(Image), 1, img);
     fflush(img); fclose(img);
+    return 0;
 }
 
 /* 根据块号获取 Image 中的块的起始地址 */
@@ -120,10 +121,12 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
     struct dirent *dirp;
 
     /* 文件夹下第一个文件为其自己 */
-    nowInode->direct[0] = nowInodeNum;
+    InodeItem ii = {".", nowInodeNum};
+    nowInode->direct[0] = ii;
     if(!strcmp(dirName, rootdir)) {
         /* 若在根目录，则无上一级，上一级文件夹也为其自己 */
-        nowInode->direct[1] = nowInodeNum;
+        ii.filename[1] = '.'; ii.filename[2] = 0;
+        nowInode->direct[1] = ii;
     }
     /* 下一个文件的序号 */
     int emptyIndex = 2;
@@ -146,9 +149,9 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
             }
             dinode.filename[i] = '\0';
             blockNum = getFreeBlock();
-            /* 文件夹的前两个文件分别为 . 和 .. */
-            dinode.direct[0] = blockNum;
-            dinode.direct[1] = nowInodeNum;
+            /* 设置上一级文件夹 */
+            InodeItem upIi = {"..", nowInodeNum};
+            dinode.direct[1] = upIi;
             char *tmp = (char *)malloc(strlen(dirName) + strlen(dirp->d_name) + 1);
             sprintf(tmp, "%s/%s", dirName, dirp->d_name);
             walk(tmp, &dinode, blockNum);
@@ -186,13 +189,15 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
                 fread(buffer, size, 1, fp);
                 l -= size;
                 if(blockIndex < 12) {
-                    finode.direct[blockIndex] = ffb;
+                    InodeItem ii = {"", ffb};
+                    finode.direct[blockIndex] = ii;
                 } else {
                     if(finode.indirect == 0) {
                         finode.indirect = getFreeBlock();
                     }
-                    uint32 *inaddr = (uint32 *)getBlockAddr(finode.indirect);
-                    inaddr[blockIndex - 12] = ffb;
+                    InodeItem *inaddr = (InodeItem *)getBlockAddr(finode.indirect);
+                    InodeItem ii = {"", ffb};
+                    inaddr[blockIndex - 12] = ii;
                 }
                 blockIndex ++;
             }
@@ -202,14 +207,22 @@ walk(char *dirName, Inode *nowInode, uint32 nowInodeNum)
             continue;
         }
 
+        InodeItem nowItem;
+        nowItem.block = blockNum;
+        int i;
+        for(i = 0; i < strlen(dirp->d_name); i ++) {
+            nowItem.filename[i] = dirp->d_name[i];
+        }
+        nowItem.filename[i] = '\0';
+
         if(emptyIndex < 12) {
-            nowInode->direct[emptyIndex] = blockNum;
+            nowInode->direct[emptyIndex] = nowItem;
         } else {
             if(nowInode->indirect == 0) {
                 nowInode->indirect = getFreeBlock();
             }
-            uint32 *inaddr = (uint32 *)getBlockAddr(nowInode->indirect);
-            inaddr[emptyIndex - 12] = blockNum;
+            InodeItem *inaddr = (InodeItem *)getBlockAddr(nowInode->indirect);
+            inaddr[emptyIndex - 12] = nowItem;
         }
         emptyIndex ++;
     }
