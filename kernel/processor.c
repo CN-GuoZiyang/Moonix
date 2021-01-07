@@ -114,7 +114,10 @@ runCPU()
      * 在启动线程的最后调用
      * 从启动线程切换进 idle，boot 线程信息丢失，不会再回来
      */
-    Thread boot = {0L, 0L};
+    Thread boot;
+    boot.contextAddr = 0;
+    boot.kstack = 0;
+    boot.wait = -1;
     switchThread(&boot, &CPU.idle);
 }
 
@@ -153,20 +156,15 @@ wakeupCPU(int tid)
  * hostTid 为需要暂停的线程的 tid
  */
 int
-executeCPU(char *path, int hostTid)
+executeCPU(Inode *inode, int hostTid)
 {
-    Inode *res = lookup(0, path);
-    if(res == 0) {
-        printf("Command not found!\n");
-        return 0;
-    }
-    if(res->type == TYPE_DIR) {
-        printf("%s: is a directory!\n", path);
+    if(inode->type == TYPE_DIR) {
+        printf("%s: is a directory!\n", inode->filename);
         return 0;
     }
     /* 暂时将 ELF 文件读入 buf 数组中 */
-    char *buf = kalloc(res->size);
-    readall(res, buf);
+    char *buf = kalloc(inode->size);
+    readall(inode, buf);
     Thread t = newUserThread(buf);
     t.wait = hostTid;
     kfree(buf);
@@ -178,4 +176,10 @@ int
 getCurrentTid()
 {
     return CPU.current.tid;
+}
+
+Thread
+*getCurrentThread()
+{
+    return &CPU.current.thread;
 }

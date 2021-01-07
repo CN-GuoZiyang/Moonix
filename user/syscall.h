@@ -4,6 +4,10 @@
 typedef enum {
     Shutdown = 13,
     LsDir = 20,
+    CdDir = 21,
+    Pwd = 22,
+    Open = 56,
+    Close = 57,
     Read = 63,
     Write = 64,
     Exit = 93,
@@ -25,10 +29,14 @@ typedef enum {
 })
 
 #define sys_shut() sys_call(Shutdown, 0, 0, 0, 0)
-#define sys_lsdir(__a0) sys_call(LsDir, __a0, 0, 0, 0)
+#define sys_lsdir(__a0, __a1) sys_call(LsDir, __a0, __a1, 0, 0)
+#define sys_cddir(__a0, __a1) sys_call(CdDir, __a0, __a1, 0, 0)
+#define sys_pwd(__a0) sys_call(Pwd, __a0, 0, 0, 0)
+#define sys_open(__a0) sys_call(Open, __a0, 0, 0, 0)
+#define sys_close(__a0) sys_call(Close, __a0, 0, 0, 0)
 #define sys_read(__a0, __a1, __a2) sys_call(Read, __a0, __a1, __a2, 0)
 #define sys_write(__a0) sys_call(Write, __a0, 0, 0, 0)
 #define sys_exit(__a0) sys_call(Exit, __a0, 0, 0, 0)
-#define sys_exec(__a0) sys_call(Exec, __a0, 0, 0, 0)
+#define sys_exec(__a0, __a1) sys_call(Exec, __a0, __a1, 0, 0)
 
 #endif

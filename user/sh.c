@@ -36,7 +36,7 @@ empty(char *line, int length)
 }
 
 int
-isBuildIn(char *line) {
+isBuildIn(char *line, int fd) {
     if(!strcmp("shutdown", line)) {
         sys_shut();
         return 1;
@@ -46,11 +46,22 @@ isBuildIn(char *line) {
     if(len >= 2 && line[0] == 'l' && line[1] == 's' && (line[2] == ' ' || line[2] == '\t' || line[2] == '\0')) {
         line += 3;
         while(*line == ' ' || *line == '\t') line ++;
+        sys_lsdir(line, fd);
+        return 1;
+    }
+    /* 处理 cd */
+    if(len >= 2 && line[0] == 'c' && line[1] == 'd' && (line[2] == ' ' || line[2] == '\t' || line[2] == '\0')) {
+        line += 3;
+        while(*line == ' ' || *line == '\t') line ++;
         if(*line == 0) {
-            printf("ls: need a path\n");
+            printf("cd: need a path\n");
             return 1;
         }
-        sys_lsdir(line);
+        sys_cddir(line, fd);
+        return 1;
+    }
+    if(len >= 3 && line[0] == 'p' && line[1] == 'w' && line[2] == 'd' && (line[3] == ' ' || line[3] == '\t' || line[3] == '\0')) {
+        sys_pwd(fd);
         return 1;
     }
     return 0;
@@ -61,6 +72,7 @@ main()
 {
     char line[256];
     int lineCount = 0;
+    int fd = sys_open("/");
     printf("Welcome to Moonix!\n");
     printf("$ ");
     while(1) {
@@ -71,8 +83,8 @@ main()
                 if(!isEmpty(line, 256)) {
                     char *stripLine = line;
                     while(*stripLine == ' ' || *stripLine == '\t') stripLine ++;
-                    if(!isBuildIn(stripLine)) {
-                        sys_exec(stripLine);
+                    if(!isBuildIn(stripLine, fd)) {
+                        sys_exec(stripLine, fd);
                     }
                     lineCount = 0;
                     empty(line, 256);

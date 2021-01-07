@@ -162,3 +162,28 @@ ls(Inode *node)
     }
     printf("\n");
 }
+
+char
+*getInodePath(Inode *inode, char buf[256])
+{
+    char *ptr = buf;
+    ptr += 256;
+    *ptr = 0;
+    ptr --;
+    if(!strcmp((char *)inode->filename, "/")) {
+        *ptr = '/';
+        return ptr;
+    }
+    while(strcmp((char *)inode->filename, "/")) {
+        int len = strlen((char *)inode->filename);
+        int i;
+        for(i = len-1; i >= 0; i --) {
+            *ptr = inode->filename[i];
+            ptr --;
+        }
+        *ptr = '/';
+        ptr --;
+        inode = lookup(inode, "..");
+    }
+    return ++ptr;
+}

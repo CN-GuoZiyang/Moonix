@@ -38,5 +38,6 @@ typedef struct
 Inode *lookup(Inode *node, char *filename);
 void readall(Inode *node, char *buf);
 void ls(Inode *node);
+char *getInodePath(Inode *inode, char path[256]);
 
 #endif

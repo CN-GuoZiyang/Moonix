@@ -116,7 +116,10 @@ Thread
 newKernelThread(usize entry)
 {
     usize stackBottom = newKernelStack();
-    Process p = {r_satp()};
+    Process p;
+    p.satp = r_satp();
+    int i;
+    for(i = 0; i < 3; i ++) p.fdOccupied[i] = 1;
     usize contextAddr = newKernelThreadContext(
         entry,
         stackBottom + KERNEL_STACK_SIZE,
@@ -140,7 +143,10 @@ newUserThread(char *data)
 
     usize kstack = newKernelStack();
     usize entryAddr = ((ElfHeader *)data)->entry;
-    Process p = {m.rootPpn | (8L << 60)};
+    Process p;
+    p.satp = m.rootPpn | (8L << 60);
+    int i;
+    for(i = 0; i < 3; i ++) p.fdOccupied[i] = 1;
     usize context = newUserThreadContext(
         entryAddr,
         ustackTop,
@@ -189,4 +195,22 @@ initThread()
 
     addToCPU(t);
     printf("***** init thread *****\n");
+}
+
+int
+allocFd(Thread *thread)
+{
+    int i = 0;
+    for(i = 0; i < 16; i ++) {
+        if(!thread->process.fdOccupied[i]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void
+deallocFd(Thread *thread, int fd)
+{
+    thread->process.fdOccupied[fd] = 0;
 }

@@ -5,10 +5,13 @@
 #include "context.h"
 #include "consts.h"
 #include "condition.h"
+#include "file.h"
 
 /* 进程为资源分配的单位，保存线程共享资源 */
 typedef struct {
     usize satp;         /* 页表寄存器 */
+    File oFile[16];     /* 文件描述符 */
+    uint8 fdOccupied[16];   /* 文件描述符是否被占用 */
 } Process;
 
 typedef struct {
@@ -63,6 +66,8 @@ typedef struct {
 /* 线程相关函数 */
 void switchThread(Thread *self, Thread *target);
 Thread newUserThread(char *data);
+int allocFd(Thread *thread);
+void deallocFd(Thread *thread, int fd);
 
 /* 线程池相关函数 */
 ThreadPool newThreadPool(Scheduler scheduler);
@@ -81,8 +86,9 @@ void exitFromCPU(usize code);
 void runCPU();
 void yieldCPU();
 void wakeupCPU(int tid);
-int executeCPU(char *path, int hostTid);
+int executeCPU(Inode *inode, int hostTid);
 int getCurrentTid();
+Thread *getCurrentThread();
 
 /* 调度器相关函数 */
 void schedulerInit();
