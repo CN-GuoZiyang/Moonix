@@ -1,3 +1,9 @@
+/*
+ *  kernel/syscall.c
+ *  
+ *  (C) 2021  Ziyang Guo
+ */
+
 #include "types.h"
 #include "def.h"
 #include "context.h"
@@ -62,6 +68,10 @@ sysCdDir(char *path, int fd)
     Inode *inode = lookup(current, path);
     if(inode == 0) {
         printf("cd: No such file or directory\n");
+        return 0;
+    }
+    if(inode->type != TYPE_DIR) {
+        printf("%s: is not a directory!\n", inode->filename);
         return 0;
     }
     getCurrentThread()->process.oFile[fd].inode = inode;
