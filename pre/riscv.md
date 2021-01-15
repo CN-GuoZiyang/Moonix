@@ -1,6 +1,6 @@
 # RISC-V 硬件机制
 
-本章主要介绍 RISC-V 的相关硬件机制，基于 RV64，SBI 相关机制基于 SBI 标准 v0.2。
+本章主要介绍 RISC-V 的相关硬件机制，基于 RV64，SBI 相关机制基于 SBI 标准 v0.2。SBI 实现以 OpenSBI 为例。
 
 ## 概览
 
@@ -101,9 +101,71 @@ hart 通常在 U-Mode 下运行应用程序代码，直到某些陷阱（例如�
 - `csrw csr, src`<br>
     将 src 的值写入 csr
 
+- `csrc(i) csr, rs1`<br>
+    将 csr 中指定的位清零，csrc 使用通用寄存器作为 mask，csrci 则使用立即数。
+
+- `csrs(i) csr, rs1`<br>
+    将 csr 中指定的位置 1，csrc 使用通用寄存器作为 mask，csrci 则使用立即数。
+
 ## 中断机制
 
-## 定时器（时钟）
+微观上，我们使用*异常*来表示当前硬件线程中执行代码发生的特殊情况，而*中断*则表示一个外部的异步事件，这个事件可能引起控制转移，通常与当前执行代码无关。宏观上，我们将其统称为*中断*。
+
+### 全局中断使能
+
+mstatus 寄存器记录了当前硬件线程的状态，由多个状态位组成。mstatus 寄存器在 S-Mode 和 U-Mode 中分别以 sstatus 和 ustatus 的名称被访问，事实上它们都是同一个寄存器的不同视图，高权限级的视图可以访问更多的状态位，低权限级低视图只能访问受限的位。
+
+![mstatus](https://cn-guoziyang.gitee.io/moonix/assets/img/mstatus.png)
+
+mstatus 寄存器中，MIE、SIE 和 UIE，分别是不同权限等级的全局中断使能位。当硬件线程以 x-Mode 运行时，xIE=1 时全局启用中断，xIE=0 时全局禁用中断，全局启用中断意味着，在该模式下运行的线程会被中断打断，并进入到中断处理流程中。
+
+如果 xIE=1，低特权级 w 的中断会被全局禁用，无论是否设置 wIE 位。类似，高特权级 y 的中断会被全局启用，无论是否设置 yIE 位。高权限级代码可以使用单独的中断启用位来禁用选定的高权限模式中断，然后将控制权让与低权限模式。
+
+为了支持嵌套中断处理，每个特权模式 x 都有两套中断启用位和特权级。xPIE 位存储了中断处理发生前的中断使能位的值，xPP 存储了上一个特权模式。由于 xPP 字段只能存储高于 x 的特权模式，所以 MPP 是两位宽，SPP 是一位宽，而 UPP 隐式为 0 。当中断处理从特权模式 y 进入特权模式 x 时，xPIE 被设置为 xIE 的值，xIE 被设置为 0，xPP 被设置为 y。
+
+指令 `MRET`、`SRET` 和 `URET` 分别用于从 M-Mode、S-Mode 和 U-Mode 的中断处理中返回。当执行 `xRET` 指令时，假设 xPP 寄存器中的值为 y，那么 xIE 会被设置为 xPIE 的值，特权模式会变为 y，xPIE 会被设置为 1，xPP 会被设置为 U（如果系统不支持 U-Mode 则会设置为 M）。
+
+xPP 字段是 **WARL**（Write any values, read legal values）字段，只能保存低于或等于 x 的特权模式，如果系统没有实现 x 模式，xPP 必须被硬连接到 0。
+
+### 具体类型中断使能
+
+具体类型的中断使能设置涉及了一对寄存器：mip 和 mie，这对寄存器在 S-Mode 和 U-Mode 下同样也有一对受限的视图，sip/sie 和 uip/uie。mip 中存储了未决中断（pending interrupts）的相关信息，而 mie 中存储了具体类型的中断使能信息。
+
+![mip](https://cn-guoziyang.gitee.io/moonix/assets/img/mip.png)
+
+![mie](https://cn-guoziyang.gitee.io/moonix/assets/img/mie.png)
+
+MTIP、STIP、UTIP 位分别对应于 M-Mode、S-Mode 和 U-Mode 时钟中断的时钟中断位决位。MTIP 位是只读的，只能通过写入内存映射的 M-Mode 时钟比较寄存器来清除。UTIP 和 STIP 位可以被 M-Mode 代码修改，用来设置低权限级的时钟中断。
+
+对于不同模式的时钟中断，mie 中分别有一个时钟中断使能位：MTIE、STIE 和 UTIE。
+
+软件中断和外部中断与时钟中断类似。
+
+只有 mip 和 mie 中的位 i（i 指时钟、软件或外部中断）被设置为 1，且全局启用了中断，才能启用 i 中断。默认情况下，如果硬件线程的当前特权模式低于 M 模式，或者当前特权模式是 M 且 mstatus 寄存器中的 MIE 位置为 1，M-Mode 的中断就是全局启用的。
+
+不同权限模式的多个并发中断按照权限模式递减的顺序进行处理，同一个特权模式下的多个并发中断按照以下优先级递减顺序处理：MEI、MSI、MTI、SEI、SSI、STI、UEI、USI、UTI。同步异常的优先级低于所有异步中断。
+
+### 中断处理程序
+
+此处中断处理程序以 M-Mode 为例，涉及的寄存器只需要更换寄存器名前缀即可推广到不同的特权模式。
+
+当 M-Mode 异常或是中断发生时，如果开始了对应类别的中断，并且全局使能中断，那么当前硬件线程的执行流程会被打断，控制转移到中断处理程序。mtvec 寄存器配置控制转移过程，该寄存器由一个向量基地址（BASE）和向量模式（MODE）组成。
+
+![mtvec](https://cn-guoziyang.gitee.io/moonix/assets/img/mtvec.png)
+
+BASE 字段的值必须至少对齐 4 字节边界，MODE 的设置可能对 BASE 字段的对齐模式增加更严格的对齐限制。
+
+|MODE 值|名称|描述|
+|:-:|:-:|:-:|
+|0|Direct|所有的中断发生时，都会跳转到 BASE 处|
+|1|Vectored|异步中断发生时，pc 会被设置为 `BASE+4×cause`|
+|>=2|——|*保留*|
+
+由上表，当 MODE 为 Direct 时，所有进入 M-Mode 的中断都会导致 pc 被设置为 BASE 字段中的地址。当 MODE 为 Vectored 时，所有进入 M-Mode 的同步异常都会导致 pc 被设置为 BASE 字段中的地址，而异步中断则会导致 pc 被设置为 BASE 字段中的地址加上中断原因编码的四倍。例如，当一个 M-Mode 的时钟中断发生时，pc 会被设置为 `BASE+0x1c`。中断原因编码会在讲述 scause 寄存器时讲解。
+
+### 中断信息
+
+
 
 ## 内存管理
 
