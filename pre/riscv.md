@@ -161,12 +161,146 @@ BASE 字段的值必须至少对齐 4 字节边界，MODE 的设置可能对 BAS
 |1|Vectored|异步中断发生时，pc 会被设置为 `BASE+4×cause`|
 |>=2|——|*保留*|
 
-由上表，当 MODE 为 Direct 时，所有进入 M-Mode 的中断都会导致 pc 被设置为 BASE 字段中的地址。当 MODE 为 Vectored 时，所有进入 M-Mode 的同步异常都会导致 pc 被设置为 BASE 字段中的地址，而异步中断则会导致 pc 被设置为 BASE 字段中的地址加上中断原因编码的四倍。例如，当一个 M-Mode 的时钟中断发生时，pc 会被设置为 `BASE+0x1c`。中断原因编码会在讲述 scause 寄存器时讲解。
+由上表，当 MODE 为 Direct 时，所有进入 M-Mode 的中断都会导致 pc 被设置为 BASE 字段中的地址。当 MODE 为 Vectored 时，所有进入 M-Mode 的同步异常都会导致 pc 被设置为 BASE 字段中的地址，而异步中断则会导致 pc 被设置为 BASE 字段中的地址加上中断原因编码的四倍。例如，当一个 M-Mode 的时钟中断发生时，pc 会被设置为 `BASE+0x1c`。中断原因编码会在讲述 xcause 寄存器时讲解。
 
 ### 中断信息
 
+当某个中断发生时，硬件会自动填写一些寄存器以辅助中断处理程序处理中断。这里以 M-Mode 下的寄存器为例，其他特权模式下的寄存器只需要更换特权前缀即可。
 
+当控制转移到 M-Mode 中时，mcause（Machine Cause Register）寄存器会被自动填入代表中断类型的代码。
+
+![mcause](https://cn-guoziyang.gitee.io/moonix/assets/img/mcause.png)
+
+如果控制转移是由一个异步中断导致的，mcause 中的 Interrupt 位会被置为 1。Exception Code 字段存储了最后一个发生的异常或中断的代码。代码如下：
+
+|Interrupt|Exception Code|描述|
+|:-:|:-:|:-:|
+|1|0|U-Mode 软件中断|
+|1|1|S-Mode 软件中断|
+|1|3|M-Mode 软件中断|
+|1|4|U-Mode 时钟中断|
+|1|5|S-Mode 时钟中断|
+|1|7|M-Mode 时钟中断|
+|1|8|U-Mode 外部中断|
+|1|9|S-Mode 外部中断|
+|1|11|M-Mode 外部中断|
+|0|0|指令地址未对齐|
+|0|1|指令访问故障|
+|0|2|非法的指令|
+|0|3|断点|
+|0|4|Load 地址未对齐|
+|0|5|Load 访问故障|
+|0|6|Store/AMO 地址未对齐|
+|0|7|Store/AMO 访问故障|
+|0|8|来自 U-Mode 的环境调用|
+|0|9|来自 S-Mode 的环境调用|
+|0|11|来自 M-Mode 的环境调用|
+|0|12|指令页故障|
+|0|13|Load 页故障|
+|0|15|Store/AMO 页故障|
+
+如果单条指令导致了多个同步异常，下面的优先级表决定了 mcause 展示哪个异常。
+
+|优先级|异常代码|描述|
+|:-:|:-:|:-:|
+|*最高*|3|指令地址断点|
+||12|指令页故障|
+||1|指令访问故障|
+||2|非法指令|
+||0|指令地址未对齐|
+||8, 9, 11|环境调用|
+||3|环境断点|
+||3|Load/Store/AMO 地址断点|
+||6|Store/AMO 地址未对齐|
+||4|Load 地址未对齐|
+||15|Store/AMO 页故障|
+||13|Load 页故障|
+||7|Store/AMO 访问故障|
+|*最低*|5|Load 访问故障|
+
+当控制转移到 M-Mode 中时，mepc（Machine Exception Program Counter） 寄存器会被自动填入被异步中断打断的指令地址或者导致同步异常的指令地址。
+
+![mepc](https://cn-guoziyang.gitee.io/moonix/assets/img/mepc.png)
+
+当控制转移到 M-Mode 中时，mtval（Machine Trap Value）寄存器会被自动填入 0 或是异常特有的信息，来辅助处理程序处理。
+
+![mtval](https://cn-guoziyang.gitee.io/moonix/assets/img/mtval.png)
+
+当触发硬件断点，或获取指令、Load、Store 时发生地址未对齐、访问故障或是页故障时，mtval 中被写入出错的虚拟地址。对于导致访问或页错误异常的未对齐 Load 或 Store，mtval 将存储导致故障的访问的虚拟地址。对于具有变长指令的系统上的指令获取获取访问异常或是页故障，mtval 存储了导致故障的指令的虚拟地址，而 mepc 指向该条地址的开始。
+
+### 中断相关指令
+
+#### 环境调用
+
+ECALL 指令用于向支持执行环境发出请求。在 U-Mode、S-Mode 和 M-Mode 下执行该指令，会分别生成 environment-call-from-U-mode 异常、environment-call-from-S-mode 异常和 environment-call-from-M-mode 异常。
+
+ECALL 指令会导致被请求的特权模式的 epc 寄存器被设置为 ECALL 指令本身的地址，而不是下一条指令的地址。
+
+#### 从中断处理返回
+
+每个特权模式都各有中断处理返回指令：MRET、SRET 和 URET。除了 mstatus 一节中描述都操作以外，该条指令还会将 pc 寄存器设置为 xepc 的值。
+
+#### 等待中断
+
+WFI 指令会暂停当前硬件线程，直到一个异步中断到来。WFI 指令的执行也可以用来通知硬件平台合适的中断应该优先由该硬件线程处理。在硬件线程暂停时，如果一个被启用的中断发生，中断异常将在 WFI 的下一条指令处发生。
 
 ## 内存管理
 
-## 并发
+RICV-V 采用分页机制来对内存进行管理。RISC-V 中，一页是连续的 4K 字节（和大多数平台一致）。RISC-V 中设置了三种分页模式来应对不同场景下的内存管理需求，实现时只需要根据平台特性选择一种即可。以下以 RV64 的 SV39 系统为例。
+
+satp（Supervisor Address Translation and Protection）寄存器，控制了 S-Mode 下的地址翻译和保护。如下：
+
+![satp](https://cn-guoziyang.gitee.io/moonix/assets/img/satp.png)
+
+该寄存器的 PPN 字段（物理页号）保存着根页表的物理页号；ASID 字段（地址空间标识符）是可选的，可以用来降低上下文切换的开销；MODE 字段用来开启分页并选择分页系统。MODE 字段可选编码如下：
+
+|MODE|名称|描述|
+|:-:|:-:|:-:|
+|0|Bare|不开启分页|
+|1|Sv32|基于页的32位虚拟地址系统|
+|8|Sv39|基于页的39位虚拟地址系统|
+|9|Sv48|基于页的48位虚拟地址系统|
+
+对于 RV32 来说，开启分页的模式只有 Sv32。而 RV64 可以选用 Sv39 和 Sv48。
+
+在 Sv39 中，物理地址有 56 位，而虚拟地址有 64 位。虽然虚拟地址有这么多位，但是其中只有低 39 位有效，第 63 ~ 39 位的值必须等于第 38 位。
+
+在 Sv39 中，物理地址有 56 位，而虚拟地址有 64 位。虽然虚拟地址有这么多位，但是其中只有低 39 位有效，第 63 ~ 39 位的值必须等于第 38 位。
+
+<center><img width=80% alt="SV39 物理地址" src="https://cn-guoziyang.gitee.io/moonix/assets/img/PA.png">
+
+<small>SV39 物理地址</small></center>
+
+<center><img width=80% alt="SV39 虚拟地址" src="https://cn-guoziyang.gitee.io/moonix/assets/img/VA.png">
+
+<small>SV39 虚拟地址</small></center>
+
+将虚拟地址映射为物理地址，这个过程是通过查表进行的。这个表就是页表（Page Table），页表中的每一项即为页表项（Page Table Entry）。
+
+![页表项](https://cn-guoziyang.gitee.io/moonix/assets/img/PTE.png)
+
+<center><small>页表项</small></center>
+
+Sv39 中的页表项长度为 64 位，其中 53 ~ 10 位为一个物理页号，9 ~ 0 位则是各种标志位：
+
+- V 为 Valid，表示这个页表项是否生效。
+- X、W、R 分别是 Execute、Writable 和 Readable，表示这个页表项所代表的物理页是否可执行、可写或可读，如果这三个位都置为 0，表示这个页表项并不是指向最终的物理页，而是指向下一级页表。
+- U 为 User，表示 U-Mode 下的程序是否可以通过该页表项进行地址映射。如果 U 置为 0，那么 U-Mode 下的程序无法使用该页表项。注意，如果 U 置为 1 时，只有 sstatus 寄存器的 SUM 位也置为 1，S-Mode 下的程序才可以访问该页表项，否则访问会出现错误。
+- G 为 Global，表示该页表项在所有地址空间都有效，通常我们不使用这个标记。
+- A 为 Accessed，表示自从上次该位被置 0 后，是否有程序访问这个页表项（访问包括读、写或取指）。
+- D 为 Dirty，用于在虚拟内存置换时标记脏页。
+- RSW 位暂时保留，留给 S-Mode 程序使用。
+
+如果我们想要实现地址翻译，记录下虚拟页到物理页的映射，一个很朴素的想法就是，使用一个数组，数组的下表就是虚拟页号，对应的值就是相应的页表项。
+
+Sv39 的虚拟地址可寻址 2^39 字节，合计 2^27 个虚拟页，如果开一个大数组进行映射，一个页表项占 8 字节，这样一个数组就需要花费 2^30 Byte = 1 GByte 内存来存储！而我们实际可用的物理地址也只有 128 MByte。
+
+Sv39 使用三级页表来解决这个问题。SV39 将 27 位的虚拟页号分成等长的三份，分别用于三级索引，用于索引三级页表。同样的，页表也分为三级，由于每个索引是 9 位，所以一个页表就有 2^9 = 512 个页表项，占用 512 × 8 = 4 KByte 字节，正好可以将一个页表放置在一个物理页中。
+
+地址翻译的过程就很简单了，三级页表的每个页表项中的物理页号描述一个二级页表；二级页表的每个页表项中的物理页号描述一个一级页表；一级页表中的页表项则和我们刚才提到的页表项一样，物理页号描述一个要映射到的物理页帧。过程如下图所示（图源自 MIT 6.s081）。
+
+<center><img width=75% alt="三级页表地址翻译" src="https://cn-guoziyang.gitee.io/moonix/assets/img/sv39_pagetable.jpg"></center>
+
+注意，三级页表和二级页表的每个页表项的 X、W 和 R 位都要置为 0，表示该条页表项指向下一级页表，而非最终的物理页。
+
+在修改 satp 寄存器后，需要通过执行 `SFENCE.VMA` 指令来刷新相关的地址翻译缓存（如 TLB）中的值以防止出现未定义行为。
