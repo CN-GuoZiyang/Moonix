@@ -108,11 +108,17 @@ $ git checkout fdd76fecdde1ad444ff4deb7f1c4f7e4a1ef97d6
 配置编译选项并安装到系统：
 
 ```bash
-$ ./configure --target-list=riscv64-softmmu && make
+$ ./configure --target-list=riscv64-softmmu
+$ make
 $ sudo make install
 ```
 
 在配置过程中可能速度较慢，配置脚本会自动从官方仓库中 clone 一些子模块，网络不好的话可能会导致失败。建议使用科学上网，或者由可以科学上网的小伙伴编译完成后拷贝过去。
+
+> [!WARNING]
+> 如果你使用的是较新版本的 gcc（一些滚动发行版可能会直接使用最新的 gcc，如 Arch 系发行版），在 make 过程中可能会出现 `ld: Error: unable to disambiguate: -no-pie (did you mean --no-pie ?)`的错误。
+>
+> 解决方案：将本项目 master 分支下 patch 文件夹中的 所有 .img 文件复制到 qemu 文件夹下的 pc-bios/optionrom/ ，并再次 make 即可
 
 ## 验证 QEMU 安装
 
