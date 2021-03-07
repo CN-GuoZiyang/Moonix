@@ -14,7 +14,7 @@
  - [ ] Chapter -1 前置知识
     - [x] -1.1 RISC-V 硬件机制
     - [x] -1.2 RISC-V 汇编
-    - [ ] SBI 接口简介
+    - [x] SBI 接口简介
     - [ ] GDB 调试简介
     - [ ] 整体架构
 - [x] Chapter 0 实验环境
