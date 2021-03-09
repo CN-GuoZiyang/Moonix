@@ -15,7 +15,7 @@
     - [x] -1.1 RISC-V 硬件机制
     - [x] -1.2 RISC-V 汇编
     - [x] SBI 接口简介
-    - [ ] GDB 调试简介
+    - [x] GDB 调试简介
     - [ ] 整体架构
 - [x] Chapter 0 实验环境
 - [x] Chapter 1 最小内核
