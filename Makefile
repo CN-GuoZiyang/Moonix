@@ -102,3 +102,11 @@ asm: Kernel
 
 qemu: Image
 	$(QEMU) $(QEMUOPTS)
+
+GDBPORT = $(shell expr `id -u` % 5000 + 25000)
+QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
+	then echo "-gdb tcp::$(GDBPORT)"; \
+	else echo "-s -p $(GDBPORT)"; fi)
+
+qemu-gdb: Image asm
+	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
