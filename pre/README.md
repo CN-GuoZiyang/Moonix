@@ -7,4 +7,6 @@
 - RISC-V 相关硬件机制
 - RISC-V 汇编
 - C 语言内联汇编
+- SBI 简介
+- GDB 调试简介
 - Moonix 体系结构

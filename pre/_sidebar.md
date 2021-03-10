@@ -3,4 +3,5 @@
 * [RISC-V 汇编](/pre/assembly.md)
 * [SBI 规范](/pre/SBI.md)
 * [GDB 调试指南](/pre/gdb.md)
+* [Moonix 体系结构](/pre/moonix.md)
 * [返回主目录](/?id=🌕-moonix)
