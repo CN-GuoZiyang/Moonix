@@ -12,11 +12,9 @@ Moonix 整体采用了宏内核模式，宏内核的优点是执行速度快，�
 
 从宏内核模式结构模型（分层思想）出发，我们可以将 Moonix 的层次结构大致描述为如下框图：
 
-
-
-// 此处应有框图
-
-
+<center>
+<img src="https://cn-guoziyang.gitee.io/moonix/assets/img/moonixtotal.png" alt="Moonix 层次结构" width=80%>
+</center>
 
 ## 中断处理模块
 
@@ -50,7 +48,9 @@ RISC-V 借助页表进行地址翻译，不同的进程可以拥有不同的页�
 
 Moonix 中整体的虚拟地址空间到物理地址空间的映射如下：
 
-// 此处应有映射图
+<center>
+<img src="https://cn-guoziyang.gitee.io/moonix/assets/img/mem.png" alt="Moonix 地址空间示意图" width=80%>
+</center>
 
 关于内存管理更详细的内容，请参见第三章与第四章。
 
@@ -95,11 +95,9 @@ typedef enum {
 } Status;
 ```
 
-
-
-// 此处应有线程状态转换图
-
-
+<center>
+<img src="https://cn-guoziyang.gitee.io/moonix/assets/img/threadstatus.png" alt="线程状态转换" width=80%>
+</center>
 
 - **就绪状态（Ready）**：线程处于就绪队列中，等待被 CPU 调度执行
 - **运行状态（Running）**：线程此时正占有 CPU 运行
