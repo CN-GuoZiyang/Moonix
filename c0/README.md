@@ -33,7 +33,7 @@ $ sudo pacman -S riscv64-linux-gnu-binutils riscv64-linux-gnu-gcc riscv64-linux-
 使用如下命令安装交叉编译工具链：
 
 ```bash
-$ sudo apt install git build-essential gdb-multiarch gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu
+$ sudo apt install git build-essential gdb-multiarch gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu pkg-config libglib2.0-dev libpixman-1-dev
 ```
 
 ## 在 MacOS 下安装
