@@ -1,43 +1,11 @@
-#
-#  Makefile
-#  
-#  (C) 2021  Ziyang Guo
-#
-
 K=kernel
-U=user
 
-OBJS = 						\
-	$K/sbi.o				\
-	$K/printf.o				\
+# 后续添加的源文件需要在这里添加，否则不会参与连接
+OBJS =						\
+	$K/entry.o				\
 	$K/interrupt.o			\
-	$K/timer.o				\
-	$K/heap.o				\
-	$K/memory.o				\
-	$K/mapping.o			\
 	$K/thread.o				\
-	$K/threadpool.o			\
-	$K/processor.o			\
-	$K/rrscheduler.o		\
-	$K/syscall.o			\
-	$K/elf.o				\
-	$K/string.o				\
-	$K/fs.o					\
-	$K/queue.o				\
-	$K/condition.o			\
-	$K/stdin.o				\
 	$K/main.o
-
-UPROSBASE =					\
-	$U/entry.o				\
-	$U/malloc.o				\
-	$U/io.o					\
-	$U/string.o				\
-
-UPROS =						\
-	hello					\
-	fib50					\
-	sh
 
 # 设置交叉编译工具链
 TOOLPREFIX := riscv64-linux-gnu-
@@ -54,12 +22,16 @@ OBJDUMP = $(TOOLPREFIX)objdump
 QEMU = qemu-system-riscv64
 
 # gcc 编译选项
+# 开启warning、将警告当成错误处理、O1优化、保留函数调用栈指针、产生GDB所需的调试信息
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb
+# 在编译过程中生成依赖文件
 CFLAGS += -MD
+# 设置代码模型为 medany，要求程序和相关符号都被定义在 2 GB 的地址空间中
 CFLAGS += -mcmodel=medany
+# 设置环境为Freestanding（不一定以main为入口）、未初始化全局变量放在bss段、链接时不使用标准库、减少获取符号地址所需的指令数
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
-
+# 关闭 gcc 的栈溢出保护机制
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
 # ld 链接选项
@@ -72,30 +44,20 @@ all: Image
 
 Image: Kernel
 
-Kernel: User $(subst .c,.o,$(wildcard $K/*.c))
+Kernel: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
 
-User: mksfs $(subst .c,.o,$(wildcard $U/*.c))
-	mkdir -p rootfs/bin
-	for file in $(UPROS); do											\
-		$(LD) $(LDFLAGS) -o rootfs/bin/$$file $(UPROSBASE) $U/$$file.o;	\
-	done
-	./mksfs
-
-mksfs:
-	gcc mkfs/mksfs.c -o mksfs
-
-# compile all .c file to .o file
+# 编译所有的 .c 文件
 $K/%.o: $K/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$U/%.o: $U/%.c
+# 编译所有的 .S 文件
+$K/%.o: $K/%.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f */*.d */*.o $K/Kernel Image Image.asm mksfs fs.img
-	rm -rf rootfs
+	rm -f */*.d */*.o $K/Kernel Image Image.asm
 	
 asm: Kernel
 	$(OBJDUMP) -S $K/Kernel > Image.asm
