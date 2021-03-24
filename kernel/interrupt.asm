@@ -1,8 +1,8 @@
 .altmacro
 # 寄存器宽度 8 字节
 .set    REG_SIZE, 8
-# Context 大小为 34 字节
-.set    CONTEXT_SIZE, 34
+# Context 大小为 34 个寄存器大小
+.set    CONTEXT_SIZE, 34*REG_SIZE
 
 # 宏：保存寄存器到栈上
 .macro SAVE reg, offset
@@ -29,12 +29,12 @@
 # 全局中断处理，保存 Context 并跳转到 handleInterrupt() 处
 __interrupt:
     # 移动栈指针，留出 Context 的空间
-    addi    sp, sp, -34*REG_SIZE
+    addi    sp, sp, -CONTEXT_SIZE
     
     # 保存通用寄存器，其中 x0 固定为 0
     SAVE    x1, 1
     # 将原来的 sp 写入 2 位置
-    addi    x1, sp, 34*REG_SIZE
+    addi    x1, sp, CONTEXT_SIZE
     SAVE    x1, 2
     # 循环保存 x3 至 x31
     .set    n, 3

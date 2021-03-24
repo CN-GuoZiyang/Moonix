@@ -9,7 +9,8 @@ setNextTimer()
 {
     usize time;
     asm volatile("csrr %0, time":"=r"(time));
-    setTimer(time + 10000);
+    // 此处时钟中断粒度过小可能导致无法输出
+    setTimer(time + 20000);
 }
 
 extern void switchToAnother();

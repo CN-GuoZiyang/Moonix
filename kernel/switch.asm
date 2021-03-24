@@ -1,37 +1,45 @@
-.equ XLENB, 8
+.altmacro
+# 寄存器宽度 8 字节
+.set    REG_SIZE, 8
+# Context 大小为 34 个寄存器大小
+.set    CONTEXT_SIZE, 13*REG_SIZE
+
+# 宏：保存寄存器到栈上
+.macro SAVE reg, offset
+    sd  \reg, \offset*8(sp)
+.endm
+
+.macro SAVE_N n
+    SAVE  s\n, \n
+.endm
+
+# 宏：从栈中恢复寄存器
+.macro LOAD reg, offset
+    ld  \reg, \offset*8(sp)
+.endm
+
+.macro LOAD_N n
+    LOAD  s\n, \n
+.endm
 
     # 将程序上下文保存在栈上
-    addi  sp, sp, (-XLENB*13)
+    addi  sp, sp, -CONTEXT_SIZE
     sd sp, 0(a0)
-    sd ra, 0*XLENB(sp)
-    sd s0, 1*XLENB(sp)
-    sd s1, 2*XLENB(sp)
-    sd s2, 3*XLENB(sp)
-    sd s3, 4*XLENB(sp)
-    sd s4, 5*XLENB(sp)
-    sd s5, 6*XLENB(sp)
-    sd s6, 7*XLENB(sp)
-    sd s7, 8*XLENB(sp)
-    sd s8, 9*XLENB(sp)
-    sd s9, 10*XLENB(sp)
-    sd s10, 11*XLENB(sp)
-    sd s11, 12*XLENB(sp)
+    .set    n, 0
+    .rept   12
+        SAVE_N  %n
+        .set    n, n + 1
+    .endr
+    sd ra, 12*REG_SIZE(sp)
 
     # 从目标线程栈上恢复上下文
     ld sp, 0(a1)
-    ld ra, 0*XLENB(sp)
-    ld s0, 1*XLENB(sp)
-    ld s1, 2*XLENB(sp)
-    ld s2, 3*XLENB(sp)
-    ld s3, 4*XLENB(sp)
-    ld s4, 5*XLENB(sp)
-    ld s5, 6*XLENB(sp)
-    ld s6, 7*XLENB(sp)
-    ld s7, 8*XLENB(sp)
-    ld s8, 9*XLENB(sp)
-    ld s9, 10*XLENB(sp)
-    ld s10, 11*XLENB(sp)
-    ld s11, 12*XLENB(sp)
-    addi sp, sp, (XLENB*13)
+    .set    n, 0
+    .rept   12
+        LOAD_N  %n
+        .set    n, n + 1
+    .endr
+    ld ra, 12*REG_SIZE(sp)
+    addi sp, sp, CONTEXT_SIZE
 
     ret

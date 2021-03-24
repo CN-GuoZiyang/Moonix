@@ -3,15 +3,15 @@
 #include "context.h"
 
 // 线程上下文保存的地址
-usize contextAddrA, contextAddrB;
+usize contextAddr[2];
 // 线程栈空间
-char stackA[0x80000], stackB[0x80000];
+char threadStack[2][0x80000];
 
-// 当前是否是线程A在运行，用来控制切换
-int inThreadA = 1;
+// 当前正在运行的线程编号，用来控制切换
+int currentThread = 0;
 
 __attribute__((naked, noinline)) void
-switchContext(usize *from, usize *target)
+switchContext(usize *from, usize *to)
 {
     asm volatile(".include \"kernel/switch.asm\"");
 }
@@ -30,12 +30,12 @@ threadFunc(usize c1, usize c2)
 void
 switchToAnother()
 {
-    if(inThreadA) {
-        inThreadA = 0;
-        switchContext(&contextAddrA, &contextAddrB);
+    if(currentThread) {
+        currentThread = 0;
+        switchContext(&contextAddr[1], &contextAddr[0]);
     } else {
-        inThreadA = 1;
-        switchContext(&contextAddrB, &contextAddrA);
+        currentThread = 1;
+        switchContext(&contextAddr[0], &contextAddr[1]);
     }
 }
 
@@ -52,33 +52,23 @@ initThread()
     // 内核线程使能异步中断
     sstatus |= (1L << 5);
 
-    InterruptContext icA;
-    icA.x[2] = (usize)stackA + 0x80000;
-    icA.x[10] = (usize)'A';
-    icA.x[11] = (usize)'A';
-    icA.sepc = (usize)threadFunc;
-    icA.sstatus = sstatus;
-    ThreadContext tcA;
-    tcA.ra = (usize) __restore;
-    tcA.ic = icA;
-    ThreadContext *caA = (ThreadContext *)((usize)stackA + 0x80000 - sizeof(ThreadContext));
-    *caA = tcA;
-    contextAddrA = (usize)caA;
-
-    InterruptContext icB;
-    icB.x[2] = (usize)stackB + 0x80000;
-    icB.x[10] = (usize)'B';
-    icB.x[11] = (usize)'B';
-    icB.sepc = (usize)threadFunc;
-    icB.sstatus = sstatus;
-    ThreadContext tcB;
-    tcB.ra = (usize) __restore;
-    tcB.ic = icB;
-    ThreadContext *caB = (ThreadContext *)((usize)stackB + 0x80000 - sizeof(ThreadContext));
-    *caB = tcB;
-    contextAddrB = (usize)caB;
+    InterruptContext ic[2];
+    ThreadContext tc[2];
+    int i = 0;
+    for(i = 0; i < 2; i ++) {
+        ic[i].x[2] = (usize)&threadStack[i] + 0x80000;
+        ic[i].x[10] = (usize)(i?'B':'A');
+        ic[i].x[11] = (usize)(i?'B':'A');
+        ic[i].sepc = (usize)threadFunc;
+        ic[i].sstatus = sstatus;
+        tc[i].ra = (usize) __restore;
+        tc[i].ic = ic[i];
+        ThreadContext *ca = (ThreadContext *)((usize)&threadStack[i] + 0x80000 - sizeof(ThreadContext));
+        *ca = tc[i];
+        contextAddr[i] = (usize)ca;
+    }
 
     // 声明成局部变量，后续不需要再切换回启动线程
     usize bootAddr;
-    switchContext(&bootAddr, &contextAddrA);
+    switchContext(&bootAddr, &contextAddr[0]);
 }

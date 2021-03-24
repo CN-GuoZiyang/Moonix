@@ -11,8 +11,8 @@ typedef struct
 
 // 线程运行上下文
 typedef struct {
-    usize ra;
     usize s[12];
+    usize ra;
     InterruptContext ic;
 } ThreadContext;
 
