@@ -36,13 +36,13 @@ initInterrupt()
     // 设置 stvec 寄存器
     extern void __interrupt();
     usize stvec = (usize)__interrupt | 0x0;
-    asm volatile("csrw stvec, %0"::"r" (stvec));
+    asm volatile("csrw stvec, %0"::"r"(stvec));
 
     // 时钟中断使能
     usize sie;
-    asm volatile("csrr %0, sie":"=r" (sie));
+    asm volatile("csrr %0, sie":"=r"(sie));
     sie |= (1L << 5);
-    asm volatile("csrw sie, %0"::"r" (sie));
+    asm volatile("csrw sie, %0"::"r"(sie));
 
     // S-Mode 全局中断使能
     usize sstatus;

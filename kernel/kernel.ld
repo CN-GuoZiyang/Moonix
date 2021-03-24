@@ -1,5 +1,3 @@
-/* kernel.ld */
-
 /* 目标架构 */
 OUTPUT_ARCH(riscv)
 

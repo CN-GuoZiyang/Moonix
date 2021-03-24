@@ -5,7 +5,7 @@ _start:
     la sp, bootstacktop
     call main
     
-# 启动线程的内核栈 bootstack 放置在 bss 段的 stack 标记处
+    # 启动线程的内核栈 bootstack 放置在 bss 段的 stack 标记处
     .section .bss.stack
     .align 12
     .global bootstack
