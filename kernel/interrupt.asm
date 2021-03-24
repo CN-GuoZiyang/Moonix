@@ -75,4 +75,5 @@ __restore:
 
     # 恢复 sp（这里最后恢复是为了上面可以正常使用 LOAD 宏）
     LOAD    x2, 2
+    # 跳转到 sepc 中的地址
     sret

@@ -30,7 +30,7 @@
         SAVE_N  %n
         .set    n, n + 1
     .endr
-    sd ra, 12*REG_SIZE(sp)
+    SAVE ra, 12
 
     # 从目标线程栈上恢复上下文
     ld sp, 0(a1)
@@ -39,7 +39,7 @@
         LOAD_N  %n
         .set    n, n + 1
     .endr
-    ld ra, 12*REG_SIZE(sp)
+    LOAD ra, 12
     addi sp, sp, CONTEXT_SIZE
 
     ret

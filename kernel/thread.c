@@ -56,14 +56,15 @@ initThread()
     ThreadContext tc[2];
     int i = 0;
     for(i = 0; i < 2; i ++) {
-        ic[i].x[2] = (usize)&threadStack[i] + 0x80000;
+        usize stackTop = (usize)threadStack[i] + 0x80000;
+        ic[i].x[2] = stackTop;
         ic[i].x[10] = (usize)(i?'B':'A');
         ic[i].x[11] = (usize)(i?'B':'A');
         ic[i].sepc = (usize)threadFunc;
         ic[i].sstatus = sstatus;
         tc[i].ra = (usize) __restore;
         tc[i].ic = ic[i];
-        ThreadContext *ca = (ThreadContext *)((usize)&threadStack[i] + 0x80000 - sizeof(ThreadContext));
+        ThreadContext *ca = (ThreadContext *)(stackTop - sizeof(ThreadContext));
         *ca = tc[i];
         contextAddr[i] = (usize)ca;
     }
