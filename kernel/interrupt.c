@@ -20,6 +20,7 @@ handleInterrupt(usize scause)
 {
     switch(scause)
     {
+        // 时钟中断发生时，scause 寄存器会被设置为如下值
         case 5L | (1L << 63):
             setNextTimer();
             switchToAnother();
@@ -33,8 +34,9 @@ handleInterrupt(usize scause)
 void
 initInterrupt()
 {
-    // 设置 stvec 寄存器
+    // 设置 stvec 寄存器，设置中断入口地址
     extern void __interrupt();
+    // 0x0 将中断跳转设置为 Direct MODE
     usize stvec = (usize)__interrupt | 0x0;
     asm volatile("csrw stvec, %0"::"r"(stvec));
 
