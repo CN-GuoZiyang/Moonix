@@ -1,5 +1,5 @@
     .section .text.entry
-    .globl _start
+    .global _start
     # 仅仅是设置了 sp 就跳转到 main
 _start:
     la sp, bootstacktop

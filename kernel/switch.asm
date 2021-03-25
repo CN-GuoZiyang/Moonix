@@ -24,6 +24,7 @@
 
     # 将程序上下文保存在栈上
     addi  sp, sp, -CONTEXT_SIZE
+    # a0 寄存器即为函数参数中的 from
     sd sp, 0(a0)
     .set    n, 0
     .rept   12
@@ -33,6 +34,7 @@
     SAVE ra, 12
 
     # 从目标线程栈上恢复上下文
+    # a1 寄存器即为函数参数中的 to
     ld sp, 0(a1)
     .set    n, 0
     .rept   12

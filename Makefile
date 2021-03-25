@@ -38,12 +38,16 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 LDFLAGS = -z max-page-size=4096
 
 # QEMU 启动选项
+# 设置虚拟机类型为 virt、bios 使用默认 BIOS（OpenSBI）
+# 将镜像复制到物理地址 0x80200000 处
+# 以无界面模式启动（不支持 VGA）
 QEMUOPTS = -machine virt -bios default -device loader,file=Image,addr=0x80200000 --nographic
 
 all: Image
 
 Image: Kernel
 
+# 将所有可执行文件链接成内核，并生成内核镜像
 Kernel: $(subst .c,.o,$(wildcard $K/*.c)) $(subst .S,.o,$(wildcard $K/*.S))
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
@@ -56,12 +60,15 @@ $K/%.o: $K/%.c
 $K/%.o: $K/%.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# 清空编译内核的临时文件
 clean:
 	rm -f */*.d */*.o $K/Kernel Image Image.asm
-	
+
+# 生成内核的反汇编	
 asm: Kernel
 	$(OBJDUMP) -S $K/Kernel > Image.asm
 
+# 启动 QEMU 加载内核执行
 qemu: Image
 	$(QEMU) $(QEMUOPTS)
 
@@ -70,5 +77,6 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 
+# 开启 qemu 的 gdb 后端
 qemu-gdb: Image asm
 	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
