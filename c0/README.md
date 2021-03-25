@@ -36,6 +36,14 @@ $ sudo pacman -S riscv64-linux-gnu-binutils riscv64-linux-gnu-gcc riscv64-linux-
 $ sudo apt install git build-essential gdb-multiarch gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu pkg-config libglib2.0-dev libpixman-1-dev
 ```
 
+如果安装完成后，在后面验证工具链时，`riscv64-linux-gnu-gcc` 的版本低于 8.0，需要执行以下步骤安装新版本的编译器，较旧版本的编译器不支持本实验的一些必备选项。这种情况可能会发生在 Ubuntu 18 上。
+
+```bash
+$ sudo apt remove gcc-riscv64-linux-gnu
+$ sudo apt install gcc-8-riscv64-linux-gnu
+$ sudo update-alternatives --install /usr/bin/riscv64-linux-gnu-gcc riscv64-linux-gnu-gcc /usr/bin/riscv64-linux-gnu-gcc-8 1
+```
+
 ## 在 MacOS 下安装
 
 在 MacOS 下需要借助 Homebrew 这个包管理器：
