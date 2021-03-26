@@ -1,3 +1,9 @@
+# 规定：
+# 若在中断之前处于 U-Mode
+# 则 sscratch 保存的是内核栈地址
+# 否则中断之前处于 S-Mode
+# sscratch 保存的是 0
+
 .altmacro
 # 寄存器宽度 8 字节
 .set    REG_SIZE, 8
@@ -28,14 +34,25 @@
     .balign 4
 # 全局中断处理，保存 Context 并跳转到 handleInterrupt() 处
 __interrupt:
+    csrrw sp, sscratch, sp
+    # 如果 sp = 0，即之前的 sscratch = 0
+    # 说明是从 S-Mode 进入中断，不需要切换栈，需要再把 sscratch 的内容读到 sp
+    # 此时 sp 和 sscratch 中都是内核栈地址
+    # 否则就是从 U-Mode 进入中断，上一条语句将 sp 与 sscratch 
+    # 此时的 sp 就是内核栈地址，sscratch 就是用户栈地址
+    bnez    sp, from_user
+from_kernel:
+    csrr    sp, sscratch
+from_user:
     # 移动栈指针，留出 Context 的空间
     addi    sp, sp, -CONTEXT_SIZE
-    
     # 保存通用寄存器，其中 x0 固定为 0
     SAVE    x1, 1
-    # 将原来的 sp 写入 2 位置
-    addi    x1, sp, CONTEXT_SIZE
-    SAVE    x1, 2
+    # 若从 S-Mode 进入中断，此时 sscratch 为内核栈地址
+    # 若从 U-Mode 进入中断，此时 sscratch 为用户栈地址
+    # 将 sscratch 保存到栈上，并清空
+    csrrw   s0, sscratch, x0
+    SAVE    s0, 2
     # 循环保存 x3 至 x31
     .set    n, 3
     .rept   29
@@ -51,7 +68,8 @@ __interrupt:
 
     # 调用 handleInterrupt()
     # 将 scause 作为参数传入
-    csrr    a0, scause
+    mv      a0, sp
+    csrr    a1, scause
     jal     handleInterrupt
 
     .globl __restore
@@ -61,6 +79,19 @@ __restore:
     # 恢复 CSR
     LOAD    s1, 32
     LOAD    s2, 33
+    # 如果从 S-Mode 进入中断， sstatus 的 SPP 位为 1
+    # 如果从 U-Mode 进入中断， sstatus 的 SPP 位为 0
+    andi    s0, s1, 1 << 8
+    bnez    s0, to_kernel
+to_user:
+    # 释放内核栈空间
+    addi    s0, sp, 34 * REG_SIZE
+    # 按照规定
+    # 如果从 U-Mode 进入中断，则需要让 sscratch 指向内核栈顶
+    # 如果从 S-Mode 进入中断，不会执行这一步，sscratch 在上面已经清零，符合规定
+    csrw    sscratch, s0
+to_kernel:
+    # 恢复 sstatus 和 sepc
     csrw    sstatus, s1
     csrw    sepc, s2
 
@@ -73,7 +104,8 @@ __restore:
         .set    n, n + 1
     .endr
 
-    # 恢复 sp（这里最后恢复是为了上面可以正常使用 LOAD 宏）
+    # 如果从 U-Mode 进入中断，这一步切换回用户栈
+    # 如果从 S-Mode 进入中断，这一步切换(回)内核栈
     LOAD    x2, 2
     # 跳转到 sepc 中的地址
     sret

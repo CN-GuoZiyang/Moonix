@@ -10,16 +10,33 @@ setNextTimer()
     usize time;
     asm volatile("csrr %0, time":"=r"(time));
     // 此处时钟中断粒度过小可能导致无法输出
-    setTimer(time + 20000);
+    setTimer(time + 50000);
+}
+
+void
+handleSyscall(InterruptContext *context)
+{
+    context->sepc += 4;
+    switch(context->x[17]) {
+        case 64:
+            consolePutchar(context->x[10]);
+            break;
+        default:
+            consolePutchar('C');
+            break;
+    }
 }
 
 extern void switchToAnother();
 
 void
-handleInterrupt(usize scause)
+handleInterrupt(InterruptContext *context, usize scause)
 {
     switch(scause)
     {
+        case 8L:
+            handleSyscall(context);
+            break;
         // 时钟中断发生时，scause 寄存器会被设置为如下值
         case 5L | (1L << 63):
             setNextTimer();

@@ -1,11 +1,14 @@
 #include "types.h"
 #include "sbi.h"
 #include "context.h"
+#include "ulib.h"
 
 // 线程上下文保存的地址
 usize contextAddr[2];
-// 线程栈空间
-char threadStack[2][0x80000];
+// 线程的内核栈空间
+char kernelStack[2][0x80000];
+// 线程的用户栈空间
+char userStack[2][0x80000];
 
 // 当前正在运行的线程编号，用来控制切换
 int currentThread = 0;
@@ -18,13 +21,10 @@ switchContext(usize *from, usize *to)
 
 // 线程的入口函数
 void
-threadFunc(usize c1, usize c2)
+threadFunc(usize c1)
 {
     while(1) {
-        // 玄学，写成一个就只能输出一次
-        // 可能是虚拟机的问题
-        consolePutchar(c1);
-        consolePutchar(c2);
+        userPutchar(c1);
     }
 }
 
@@ -44,21 +44,22 @@ initThread()
 {
     uint64 sstatus;
     asm volatile("csrr %0, sstatus":"=r"(sstatus));
-    // sret 后特权级为 S-Mode
-    sstatus |= (1L << 8);
-    // 内核线程使能异步中断
+    // sret 后特权级为 U-Mode
+    sstatus &= ~(1L << 8);
+    // 用户模式时钟中断使能
+    sstatus &= ~(1L << 1);
     sstatus |= (1L << 5);
 
     InterruptContext ic[2];
     ThreadContext tc[2];
     int i = 0;
     for(i = 0; i < 2; i ++) {
-        usize stackTop = (usize)threadStack[i] + 0x80000;
-        // x2 即为 sp 寄存器，指向新线程的栈顶
-        ic[i].x[2] = stackTop;
+        usize ustackTop = (usize)userStack[i] + 0x80000;
+        usize kstackTop = (usize)kernelStack[i] + 0x80000;
+        // x2 即为 sp 寄存器，指向新线程的用户栈顶
+        ic[i].x[2] = ustackTop;
         // x10 - x17 用于参数传递
         ic[i].x[10] = (usize)(i?'B':'A');
-        ic[i].x[11] = (usize)(i?'B':'A');
         // 由于借助中断返回机制初始化线程
         // 初始化结束后会执行 sret 跳转到 sepc 寄存器中存储的地址
         // 所以将线程逻辑的入口点存入 sepc
@@ -68,7 +69,7 @@ initThread()
         // 需要借助该函数进行初始化寄存器
         tc[i].ra = (usize) __restore;
         tc[i].ic = ic[i];
-        ThreadContext *ca = (ThreadContext *)(stackTop - sizeof(ThreadContext));
+        ThreadContext *ca = (ThreadContext *)(kstackTop - sizeof(ThreadContext));
         *ca = tc[i];
         contextAddr[i] = (usize)ca;
     }
