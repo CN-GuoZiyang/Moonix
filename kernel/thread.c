@@ -40,15 +40,17 @@ switchThread(Thread *self, Thread *target)
 }
 
 usize
-pushContextToStack(ThreadContext self, usize stackTop)
+pushContextToStack(ThreadContext tc, InterruptContext ic, usize stackTop)
 {
     /*
-     * 将线程上下文压入栈顶
+     * 将中断上下文和线程上下文依次压入栈顶
      * 并返回新的栈顶地址
      */
-    ThreadContext *ptr = (ThreadContext *)(stackTop - sizeof(ThreadContext));
-    *ptr = self;
-    return (usize)ptr;
+    InterruptContext *ptr1 = (InterruptContext *)(stackTop - sizeof(InterruptContext));
+    *ptr1 = ic;
+    ThreadContext *ptr2 = (ThreadContext *)((usize)ptr1 - sizeof(ThreadContext));
+    *ptr2 = tc;
+    return (usize)ptr2;
 }
 
 usize
@@ -71,8 +73,7 @@ newKernelThreadContext(usize entry, usize kernelStackTop, usize satp)
     ThreadContext tc;
     extern void __restore(); tc.ra = (usize)__restore;
     tc.satp = satp;
-    tc.ic = ic;
-    return pushContextToStack(tc, kernelStackTop);
+    return pushContextToStack(tc, ic, kernelStackTop);
 }
 
 usize
@@ -90,26 +91,7 @@ newUserThreadContext(usize entry, usize ustackTop, usize kstackTop, usize satp)
     ThreadContext tc;
     extern void __restore(); tc.ra = (usize)__restore;
     tc.satp = satp;
-    tc.ic = ic;
-    return pushContextToStack(tc, kstackTop);
-}
-
-/*
- * 借助函数调用机制向新线程传递参数
- * 最多可传递 8 个参数
- */
-void
-appendArguments(Thread thread, usize args[8])
-{
-    ThreadContext *ptr = (ThreadContext *)thread.contextAddr;
-    ptr->ic.x[10] = args[0];
-    ptr->ic.x[11] = args[1];
-    ptr->ic.x[12] = args[2];
-    ptr->ic.x[13] = args[3];
-    ptr->ic.x[14] = args[4];
-    ptr->ic.x[15] = args[5];
-    ptr->ic.x[16] = args[6];
-    ptr->ic.x[17] = args[7];
+    return pushContextToStack(tc, ic, kstackTop);
 }
 
 Thread
