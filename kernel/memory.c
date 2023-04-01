@@ -62,6 +62,12 @@ deallocFrame(usize startAddr)
 void
 initMemory()
 {
+    /* 初始化 .bss 段 */
+    uint64 *bss_start_init = (uint64 *) bss_start, *bss_end_init = (uint64 *) bss_end;
+    for (volatile uint64 *bss_mem = bss_start_init; bss_mem < bss_end_init; ++bss_mem) {
+        *bss_mem = 0;
+    }
+
     /* 
      * 开启 sstatus 的 SUM 位
      * 允许内核访问用户内存

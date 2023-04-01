@@ -72,7 +72,7 @@ all: Image
 
 Image: Kernel
 
-Kernel: User $(subst .c,.o,$(wildcard $K/*.c))
+Kernel: User $(subst .c,.o,$(wildcard $K/*.c)) $K/*.h $K/*.asm $K/*.ld
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/Kernel $(OBJS)
 	$(OBJCOPY) $K/Kernel -O binary Image
 

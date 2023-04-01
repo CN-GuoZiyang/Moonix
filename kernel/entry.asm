@@ -33,7 +33,7 @@ _start:
     addi t0, t0, %lo(main)
     jr t0
 
-    .section .bss.stack
+    .section .stack
     .align 12
 
     # 以下 4096 × 16 字节的空间作为 OS 的启动栈
