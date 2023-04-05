@@ -7,6 +7,7 @@ extern void text_start();                       /* 代码段起始虚拟地址 *
 extern void rodata_start();                     /* 只读数据段起始虚拟地址 */
 extern void data_start();                       /* 数据段起始虚拟地址 */
 extern void bss_start();                        /* .bss 段起始虚拟地址 */
+extern void bss_end();                          /* .bbs 段结束虚拟地址 */
 extern void kernel_end();                       /* 内核所在内存空间结束的虚拟地址 */
 
 /* 动态内存中定义堆的相关常量 */
